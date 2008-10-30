@@ -14,27 +14,23 @@ extern "C" {
  *
  * This is the documentation for the UIOMux C API.
  * The role of the resource allocation manager is to
- * mediate access to the custom IP blocks (terminology?)
- * in the SuperH MobileR series SoC.
+ * mediate access to the custom IP blocks in the SuperH MobileR series SoC.
  *
- * multiplexes access to the IP blocks
- * available via UIO.
+ * UIOMux multiplexes access to the IP blocks which are made available via the
+ * Linux kernel's UIO interface.
  *
  * Features:
  *  - Allows multiple IP blocks to be shared via a single kernel-provided
  *    UIO device
- *  - Efficiency: mediates access, does not interfere with it
+ *  - Efficiency: mediates access, but does not interfere with it.
  *    Users must understand that they co-operatively access the
  *    all devices available via UIO; it is not possible via this
  *    interface for the kernel to provide memory protection
  *
- *    much like the differences between a userspace threading library 
- *    and kernel threads.
- * 
  *  - Portability: Allows userspace applications to query
  *    which blocks are available on this platform.
  *    the response to that can be configured at build time
- *    or set in a system config file (/etc/....conf)
+ *    or set in a system config file (/etc/uiomux/uiomux.conf)
  *    but the point is to allow application portability
  *    and the possibility to ship a single codec binary or
  *    application binary that works on multiple similar chips
@@ -42,18 +38,20 @@ extern "C" {
  *    block is not available, or disable relevant funtionality at
  *    runtime)
  * 
- * so, internally it simply keeps a counter of events per
- * UIO block, and info on who owns each
+ * UIOMux keeps track of events for each * UIO block, and information
+ * about the owner of each.
  * 
- * can return access violations in response to (what?)
+ * Attempts to access a claim access to a block that is already in use 
+ * will fail, as will attempts to poll for events on a block that has
+ * not been claimed.
  * 
- * can be queried for whether or not a block is available?
- * 
- * can ask for multiple blocks atomically? ie. if cannot get a
- * group of blocks, don't get any (to reduce contention on
- * eg. requesting both encoder and decoder, or camera and encoder)
- * 
- * hence block identifiers are bitmasked together
+ * The user of UIOMux can ask for multiple blocks atomically, so that if
+ * it is not possible to get exclusive access to all of a group of blocks,
+ * then the request fails. This interface is provided in order to
+ * reduce contention and livelock, for example an applications requesting
+ * exclusive access to both an encoder and decoder, or a camera and an
+ * encoder. In order to specify operatiosn on multiple blocks, block
+ * identifiers are bitmasked together.
  *
  * \subsection contents Contents
  * 
@@ -66,11 +64,6 @@ extern "C" {
  * - \link building Building \endlink:
  * \section API
  * 
- * The API is modelled on a conventional open/read/write/close
- * file descriptor interface.
- * 
- * % kernel-style naming schemes? opaque descriptor?
- * % language: use language / style of arch docs
  */
 
 /** \defgroup configuration Configuration
@@ -145,9 +138,9 @@ extern "C" {
 typedef void UIOMux;
 
 /**
- * query which blocks are available on this platform.
+ * Query which blocks are available on this platform.
  * the response to that can be configured at build time
- * or set in a system config file (/etc/....conf)
+ * or set in a system config file (/etc/uiomux/uiomux.conf)
  * but the point is to allow application portability
  * and the possibility to ship a single codec binary or
  * application binary that works on multiple similar chips
@@ -159,16 +152,15 @@ uiomux_blockmask_t
 uiomux_query(void);
 
 /**
- * retrieve a printable name for an IP block:
+ * Retrieve a printable name for an IP block:
  */
 const char * uiomux_name();
 
 /**
- * Create a new UIOMux object
- * (perhaps) gaining access to an IP block gets access to a list of
- * maps relevant to that IP block, usable by a user of that IP block
+ * Create a new UIOMux object,
+ * gaining access to an IP block. This then allows access to a list of
+ * maps relevant to that IP block, usable by a user of that IP block.
  * 
- * open in read only mode possible? or are all opens writable?
  * \retval NULL on system error; check errno for details
  */
 UIOMux *
@@ -183,19 +175,19 @@ int
 uiomux_close (UIOMux * uiomux);
 
 /**
- * check if events/data are available:
- * 
- * poll for particular blocks only?
- * get access violation if ask for blocks that don't own?
+ * Poll for pending events for particular blocks only.
+ *
  * \param uiomux A UIOMux handle
+ * \param blocks A UIOMux blockmask of blocks to request event notification for.
+ * \retval -1 Access violation: returned on request for blocks that have not
+ *            been claimed by \a uiomux.
  */
 int
-uiomux_poll(UIOMux * uiomux);
+uiomux_poll(UIOMux * uiomux, uiomux_blockmask_t blocks);
 
 /**
- * read data:
  * read simply mimics the UIO read() interface, returning the number of
- * events available for that IP block?
+ * events available for the IP block
  * \param uiomux A UIOMux handle
  * \retval The number of pending UIO events for the blocks owned by
  *         \a uiomux
@@ -203,20 +195,22 @@ uiomux_poll(UIOMux * uiomux);
 int
 uiomux_read(UIOMux * uiomux);
 
-/**
+#if 0
+/*
  * write data:
  * \param uiomux A UIOMux handle
  */
 int
 uiomux_write(UIOMux * uiomux);
 
-/**
+/*
  * request memory map:
  * or query existing maps for this process?
  * \param uiomux A UIOMux handle
  */
 int
 uiomux_mmap(UIOMux * uiomux);
+#endif
 
 #ifdef __cplusplus
 }

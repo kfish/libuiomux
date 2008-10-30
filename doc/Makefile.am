@@ -9,7 +9,8 @@ EXTRA_DIST = $(man_MANS) Doxyfile.in
 noinst_DATA = doxygen-build.stamp
 
 if HAVE_DOXYGEN
-doxygen-build.stamp: Doxyfile $(top_srcdir)/include/uiomux/*.h $(top_srcdir)/src/examples/*.c
+# doxygen-build.stamp: Doxyfile $(top_srcdir)/include/uiomux/*.h $(top_srcdir)/src/examples/*.c
+doxygen-build.stamp: Doxyfile $(top_srcdir)/include/uiomux/*.h
 	doxygen
 	touch doxygen-build.stamp
 else
