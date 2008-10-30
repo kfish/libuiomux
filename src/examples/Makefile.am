@@ -5,4 +5,3 @@ INCLUDES = -I$(top_builddir) \
 
 UIOMUXDIR = ../libuiomux
 UIOMUX_LIBS = $(UIOMUXDIR)/libuiomux.la
-

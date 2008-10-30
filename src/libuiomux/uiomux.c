@@ -84,8 +84,16 @@ uiomux_close (UIOMux * uiomux)
 }
 
 int
-uiomux_poll(UIOMux * uiomux)
+uiomux_poll(UIOMux * uiomux, uiomux_blockmask_t blocks)
 {
+  /* Check outstanding polls for requested blocks */
+
+  /* otherwise, poll() */
+
+  /* Check result against blockmask */
+
+  /* Cache remaining blocks */
+
   return 0;
 }
 
@@ -97,6 +105,7 @@ uiomux_read(UIOMux * uiomux)
   return 0;
 }
 
+#if 0
 int
 uiomux_write(UIOMux * uiomux)
 {
@@ -112,3 +121,4 @@ uiomux_mmap(UIOMux * uiomux)
 
   return 0;
 }
+#endif
