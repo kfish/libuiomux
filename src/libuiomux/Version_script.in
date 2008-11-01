@@ -13,6 +13,8 @@
 		uiomux_lock;
 		uiomux_unlock;
 		uiomux_query;
+		uiomux_name;
+		uiomux_info;
 
                 uiomux_system_reset;
                 uiomux_system_destroy;

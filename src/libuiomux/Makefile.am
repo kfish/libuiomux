@@ -10,10 +10,11 @@ EXTRA_DIST = Version_script.in
 lib_LTLIBRARIES = libuiomux.la
 
 noinst_HEADERS = \
-	uiomux_private.h
+	uiomux_private.h uio.h
 
 libuiomux_la_SOURCES = \
         state.c \
+	uio.c \
 	uiomux.c
 
 libuiomux_la_LDFLAGS = -version-info @SHARED_VERSION_INFO@ @SHLIB_VERSION_ARG@

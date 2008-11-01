@@ -157,6 +157,14 @@ uiomux_query(void);
 const char * uiomux_name(uiomux_blockmask_t block);
 
 /**
+ * Print info about UIO maps to stdout
+ * \param uiomux A UIOMux handle
+ * \retval 0 Success
+ */
+int
+uiomux_info (UIOMux * uiomux);
+
+/**
  * Create a new UIOMux object,
  * gaining access to an IP block. This then allows access to a list of
  * maps relevant to that IP block, usable by a user of that IP block.

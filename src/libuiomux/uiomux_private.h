@@ -7,6 +7,8 @@
 
 #include <uiomux/uiomux_blocks.h>
 
+#include "uio.h"
+
 /***********************************************************
  * Library-private defines
  */
@@ -20,7 +22,8 @@
  */
 
 struct uiomux_block {
-  pthread_mutex_t mutex;
+  struct uio * uio;
+  long * registers;
 };
 
 struct uiomux_state {
@@ -33,12 +36,16 @@ struct uiomux_state {
   /* Number of blocks allocated and initialized */
   int num_blocks;
 
-  /* Blocks */
-  struct uiomux_block blocks[UIOMUX_BLOCK_MAX]; 
+  /* Mutexes */
+  pthread_mutex_t mutex[UIOMUX_BLOCK_MAX];
 };
 
 struct uiomux {
+  /* Shared state */
   struct uiomux_state * shared_state;
+
+  /* Blocks */
+  struct uiomux_block blocks[UIOMUX_BLOCK_MAX]; 
 };
 
 /***********************************************************
@@ -56,5 +63,11 @@ unmap_shared_state (struct uiomux_state * state);
 
 int
 destroy_shared_state (struct uiomux_state * state);
+
+int
+uiomux_close (struct uiomux * uiomux);
+
+const char *
+uiomux_name(uiomux_blockmask_t block);
 
 #endif /* __UIOMUX_PRIVATE_H__ */
