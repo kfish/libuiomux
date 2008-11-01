@@ -45,9 +45,12 @@ uiomux_unlock_all (struct uiomux * uiomux)
  *
  * In order to do so, it first attempts to check if the UIOMux* handle is still
  * valid, ie. whether or not it has already been freed. It does this by checking
- * the shared_state value, which is the first member of struct uiomux. Note that
- * in the common case where uiomux has already been freed, this will lead to the
- * following error being reported by valgrind:
+ * the shared_state value, which is the first member of struct uiomux. We ensure
+ * that this is valid by delaying the free() of uiomux until program exit, which
+ * is why uiomux_free() below frees everything but the uiomux* itself.
+ *
+ * This mechanism avoids the following error being reported by valgrind in the
+ * common case where uiomux has* already been freed:
  *
  * ==31337== Invalid read of size 4
  * ==31337==    at 0x403C909: uiomux_on_exit (uiomux.c:51)
@@ -75,6 +78,9 @@ uiomux_on_exit (int exit_status, void * arg)
   if (uiomux->shared_state && uiomux->shared_state->proper_address == uiomux->shared_state) {
     uiomux_close (uiomux);
   }
+
+  /* Finally, free uiomux */
+  free (uiomux);
 }
 
 struct uiomux *
@@ -132,7 +138,7 @@ uiomux_free (struct uiomux * uiomux)
       free (block->registers);
   }
 
-  free (uiomux);
+  /* uiomux will be free'd on exit */
 }
 
 int
