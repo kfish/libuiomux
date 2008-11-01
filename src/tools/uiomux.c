@@ -35,7 +35,9 @@ usage (void)
   printf ("  reset       Reset the UIOMux system. This initializes the UIOMux shared state,\n");
   printf ("              including all shared mutexes, and scans UIO memory maps.\n");
   printf ("  destroy     Destroy the UIOMux system. This frees all resources used by the\n");
-  printf ("              UIOMux shared state.\n");
+  printf ("              UIOMux shared state. Note that any subsequent program using UIOMux\n");
+  printf ("              will reallocate and initialize this shared state, including this\n");
+  printf ("              tool's 'info' and 'reset' commands.\n");
 }
 
 static void
@@ -69,7 +71,7 @@ reset (void)
   struct uiomux * uiomux;
 
   uiomux = uiomux_open (0);
-  printf ("Resetting uiomux system...\n");
+  printf ("Resetting UIOMux system ...\n");
   uiomux_system_reset (uiomux);
   uiomux_close (uiomux);
 }
@@ -80,7 +82,7 @@ destroy (void)
   struct uiomux * uiomux;
 
   uiomux = uiomux_open (0);
-  printf ("Destroying uiomux system...\n");
+  printf ("Destroying UIOMux system ...\n");
   uiomux_system_destroy (uiomux);
   exit (0);
 }
@@ -102,4 +104,6 @@ main (int argc, char *argv[])
   } else if (!strncmp (argv[1], "destroy", 8)) {
     destroy ();
   }
+
+  exit (0);
 }

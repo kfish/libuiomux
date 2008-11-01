@@ -92,16 +92,11 @@ uiomux_open (uiomux_blockmask_t blocks)
   return uiomux;
 }
 
-int
-uiomux_close (struct uiomux * uiomux)
+static void
+uiomux_free (struct uiomux * uiomux)
 {
   struct uiomux_block * block;
   int i;
-
-  if (uiomux == NULL) return -1;
-
-  uiomux_unlock_all (uiomux);
-  unmap_shared_state (uiomux->shared_state);
 
   /* Mark this as NULL to invalidate uiomux for uiomux_on_exit */
   uiomux->shared_state = NULL;
@@ -114,6 +109,17 @@ uiomux_close (struct uiomux * uiomux)
   }
 
   free (uiomux);
+}
+
+int
+uiomux_close (struct uiomux * uiomux)
+{
+  if (uiomux == NULL) return -1;
+
+  uiomux_unlock_all (uiomux);
+  unmap_shared_state (uiomux->shared_state);
+
+  uiomux_free (uiomux);
 
   return 0;
 }
@@ -137,7 +143,7 @@ uiomux_system_destroy (struct uiomux * uiomux)
 {
   destroy_shared_state (uiomux->shared_state);
 
-  uiomux_close (uiomux);
+  uiomux_free (uiomux);
 
   return 0;
 }

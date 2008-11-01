@@ -161,10 +161,6 @@ destroy_shared_state (struct uiomux_state * state)
   pthread_mutex_t * mutex;
   int i, ret;
 
-  if (shm_unlink (UIOMUX_SHM_NAME) < 0) {
-    debug_perror ("shm_unlink");
-  }
-
   if (state == NULL) return -1;
   if (state->proper_address != state) return -1;
 
@@ -180,6 +176,10 @@ destroy_shared_state (struct uiomux_state * state)
   }
 
   munmap ((void *)state, sizeof (struct uiomux_state));
+
+  if (shm_unlink (UIOMUX_SHM_NAME) < 0) {
+    debug_perror ("shm_unlink");
+  }
 
   return 0;
 }
