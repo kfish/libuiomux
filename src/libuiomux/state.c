@@ -36,6 +36,7 @@ init_shared_state (struct uiomux_state * state)
 {
   struct uiomux_block * block;
   pthread_mutexattr_t attr;
+  pthread_mutex_t * mutex;
   struct uio * uio;
   int i;
 
@@ -47,7 +48,8 @@ init_shared_state (struct uiomux_state * state)
 
   for (i = 0; i < UIOMUX_BLOCK_MAX; i++) {
     /* Initialize mutex, regardless */
-    pthread_mutex_init (&state->mutex[i], &attr);
+    mutex = &state->mutex[i].mutex;
+    pthread_mutex_init (mutex, &attr);
   }
 
   pthread_mutexattr_destroy (&attr);
@@ -156,6 +158,7 @@ unmap_shared_state (struct uiomux_state * state)
 int
 destroy_shared_state (struct uiomux_state * state)
 {
+  pthread_mutex_t * mutex;
   int i, ret;
 
   if (shm_unlink (UIOMUX_SHM_NAME) < 0) {
@@ -167,7 +170,8 @@ destroy_shared_state (struct uiomux_state * state)
 
   for (i = 0; i < UIOMUX_BLOCK_MAX; i++) {
     /* Destroy mutex */
-    ret = pthread_mutex_destroy (&state->mutex[i]);
+    mutex = &state->mutex[i].mutex;
+    ret = pthread_mutex_destroy (mutex);
     if (ret == EBUSY) {
 #ifdef DEBUG
       perror ("pthread_mutex_destroy");

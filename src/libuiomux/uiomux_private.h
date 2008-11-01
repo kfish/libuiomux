@@ -27,6 +27,11 @@ struct uiomux_block {
   long * registers;
 };
 
+struct uiomux_mutex {
+  pthread_mutex_t mutex;
+  pthread_t prev_holder;
+};
+
 struct uiomux_state {
   /* The base address of the memory map */
   void * proper_address;
@@ -38,7 +43,7 @@ struct uiomux_state {
   int num_blocks;
 
   /* Mutexes */
-  pthread_mutex_t mutex[UIOMUX_BLOCK_MAX];
+  struct uiomux_mutex mutex[UIOMUX_BLOCK_MAX];
 };
 
 struct uiomux {

@@ -36,7 +36,7 @@ uiomux_unlock_all (struct uiomux * uiomux)
 #ifdef DEBUG
     printf ("uiomux_unlock_all: Unlocking block %d\n", i);
 #endif
-    mutex = &uiomux->shared_state->mutex[i];
+    mutex = &uiomux->shared_state->mutex[i].mutex;
     pthread_mutex_unlock (mutex);
   }
 
@@ -169,15 +169,18 @@ uiomux_lock (struct uiomux * uiomux, uiomux_blockmask_t blockmask)
 #ifdef DEBUG
       printf ("Locking block %d\n", i);
 #endif
-      mutex = &uiomux->shared_state->mutex[i];
+      mutex = &uiomux->shared_state->mutex[i].mutex;
       pthread_mutex_lock (mutex);
 
       /* restore registers */
-      block = &uiomux->blocks[i];
-      if (block->uio) {
-        reg_base = block->uio->mmio.iomem;
-        for (k=0; k < block->nr_registers; k++) {
-          reg_base[k] = block->registers[k];
+      if (!pthread_equal (uiomux->shared_state->mutex[i].prev_holder,
+                          pthread_self())) {
+        block = &uiomux->blocks[i];
+        if (block->uio) {
+          reg_base = block->uio->mmio.iomem;
+          for (k=0; k < block->nr_registers; k++) {
+            reg_base[k] = block->registers[k];
+          }
         }
       }
 
@@ -208,11 +211,14 @@ uiomux_unlock (struct uiomux * uiomux, uiomux_blockmask_t blockmask)
         }
       }
 
+      /* record last holder */
+      uiomux->shared_state->mutex[i].prev_holder = pthread_self();
+
       /* unlock mutex */
 #ifdef DEBUG
       printf ("Unlocking block %d\n", i);
 #endif
-      mutex = &uiomux->shared_state->mutex[i];
+      mutex = &uiomux->shared_state->mutex[i].mutex;
       pthread_mutex_unlock (mutex);
     }
   }
