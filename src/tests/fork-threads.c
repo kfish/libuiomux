@@ -37,10 +37,10 @@ thread_main (void * arg)
 
   usleep (3);
 
-  uiomux_lock (uiomux, UIOMUX_SH_BEU);
-  snprintf (buf, 256, "BEU Locked by thread %d", threadid);
+  uiomux_lock (uiomux, UIOMUX_SH_BEU | UIOMUX_SH_VEU);
+  snprintf (buf, 256, "BEU and VEU Locked by thread %d", threadid);
   INFO (buf);
-  uiomux_unlock (uiomux, UIOMUX_SH_BEU);
+  uiomux_unlock (uiomux, UIOMUX_SH_BEU | UIOMUX_SH_VEU);
 
   usleep (1);
 
@@ -80,7 +80,7 @@ main (int argc, char *argv[])
   int  ret;
 
   INFO ("Opening UIOMux for BEU");
-  uiomux = uiomux_open(UIOMUX_SH_BEU | UIOMUX_SH_CEU | UIOMUX_SH_JPU);
+  uiomux = uiomux_open(UIOMUX_SH_BEU | UIOMUX_SH_CEU | UIOMUX_SH_JPU | UIOMUX_SH_VEU);
   if (uiomux == NULL)
     FAIL ("Opening UIOMux");
 
