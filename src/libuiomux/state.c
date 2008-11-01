@@ -194,11 +194,13 @@ get_shared_state (void)
   if (state == NULL) {
     switch (errno) {
     case EEXIST:
-    default:
 #ifdef DEBUG
       fprintf (stderr, "get_shared_state: already created, mapping ...\n");
 #endif
       state = map_shared_state ();
+      break;
+    default:
+      perror ("uiomux: Could not create shared state");
       break;
     }
   } else {
