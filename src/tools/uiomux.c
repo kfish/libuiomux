@@ -18,7 +18,24 @@ version (void)
 static void
 usage (void)
 {
-  printf ("uiomux <command> [options]\n");
+  printf ("Usage: uiomux <command> [options]\n\n");
+
+  printf ("uiomux is a tool for querying UIO and managing the UIOMux state.\n");
+
+#if 0
+  printf ("\nCommands:\n");
+  printf ("  help        Display help for a specific command (eg. \"uiomux help info\")\n");
+#endif
+
+  printf ("\nReporting:\n");
+  printf ("  query       List available UIO device names that can be managed by UIOMux.\n");
+  printf ("  info        Show memory layout of each UIO device managed by UIOMux.\n");
+
+  printf ("\nManagement:\n");
+  printf ("  reset       Reset the UIOMux system. This initializes the UIOMux shared state,\n");
+  printf ("              including all shared mutexes, and scans UIO memory maps.\n");
+  printf ("  destroy     Destroy the UIOMux system. This frees all resources used by the\n");
+  printf ("              UIOMux shared state.\n");
 }
 
 static void
