@@ -17,14 +17,6 @@
 
 /* #define DEBUG */
 
-#if 0
-static char * devname = "/dev/uio0";
-#else
-static char * devname = "/dev/zero";
-#endif
-
-static uiomux_blockmask_t allocated = UIOMUX_NONE;
-
 static int
 uiomux_unlock_all (struct uiomux * uiomux)
 {
@@ -58,11 +50,6 @@ uiomux_on_exit (int exit_status, void * arg)
    * mapped at its proper address */
   if (uiomux->shared_state && uiomux->shared_state->proper_address == uiomux->shared_state) {
     uiomux_close (uiomux);
-#if 0
-    uiomux_unlock_all (uiomux);
-    unmap_shared_state(uiomux->shared_state); 
-    free (uiomux);
-#endif
   }
 }
 
@@ -290,84 +277,3 @@ uiomux_info (struct uiomux * uiomux)
 
   return 0;
 }
-
-#if 0
-UIOMux *
-uiomux_open (uiomux_blockmask_t blocks)
-{
-  UIOMux * uiomux;
-
-  /* Check if the allocation is allowed */
-  if ((blocks & allocated) != 0) {
-    return NULL;
-  }
-
-  /* If so, go for it ... */
-  uiomux = malloc (sizeof(*uiomux));
-  if ((uiomux->fd = open (devname, O_RDONLY)) == -1) {
-    free (uiomux);
-    return NULL;
-  } 
-
-  uiomux->blocks = blocks;
-
-  allocated |= blocks;
-
-  return uiomux;
-}
-
-int
-uiomux_close (UIOMux * uiomux)
-{
-  if (uiomux == NULL) {
-    return -1;
-  }
-
-  /* Deallocate blocks */
-  allocated ^= uiomux->blocks;
-
-  free (uiomux);
-
-  return 0;
-}
-
-int
-uiomux_poll(UIOMux * uiomux, uiomux_blockmask_t blocks)
-{
-  /* Check outstanding polls for requested blocks */
-
-  /* otherwise, poll() */
-
-  /* Check result against blockmask */
-
-  /* Cache remaining blocks */
-
-  return 0;
-}
-
-int
-uiomux_read(UIOMux * uiomux)
-{
-  /* Read from UIO */
-
-  return 0;
-}
-#endif
-
-#if 0
-int
-uiomux_write(UIOMux * uiomux)
-{
-  /* Write to UIO */
-
-  return 0;
-}
-
-int
-uiomux_mmap(UIOMux * uiomux)
-{
-  /* Handle mmap */
-
-  return 0;
-}
-#endif
