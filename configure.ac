@@ -90,6 +90,31 @@ if test "x$HAVE_GETOPT_LONG" = xyes ; then
   AC_DEFINE(HAVE_GETOPT_LONG, [], [Define to 1 if you have the 'getopt_long' function])
 fi
 
+dnl
+dnl  Detect pthreads libraries
+dnl
+
+PTHREAD_LIBS=error
+AC_CHECK_LIB(pthread, pthread_attr_init, PTHREAD_LIBS="-lpthread")
+if test "x$PTHREAD_LIBS" = xerror; then
+        AC_CHECK_LIB(pthreads, pthread_attr_init, PTHREAD_LIBS="-lpthreads")
+fi
+if test "x$PTHREAD_LIBS" = xerror; then
+        AC_CHECK_LIB(c_r, pthread_attr_init, PTHREAD_LIBS="-lc_r")
+fi
+if test "x$PTHREAD_LIBS" = xerror; then
+        AC_CHECK_FUNC(pthread_attr_init, PTHREAD_LIBS="")
+fi
+AC_SUBST(PTHREAD_LIBS)
+
+dnl
+dnl Detect librt
+dnl
+
+RT_LIBS=error
+AC_CHECK_LIB(rt, shm_open, RT_LIBS="-lrt")
+AC_SUBST(RT_LIBS)
+
 dnl Overall configuration success flag
 uiomux_config_ok=yes
 
@@ -226,7 +251,7 @@ AC_MSG_RESULT([
 
   Installation paths:
 
-    libuiomux: ..................... ${LIBDIR}
+    libuiomux: ................... ${LIBDIR}
     C header files: .............. ${INCLUDEDIR}/uiomux
     Documentation: ............... ${DOCDIR}/$PACKAGE
 

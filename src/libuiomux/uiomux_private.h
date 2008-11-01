@@ -7,9 +7,54 @@
 
 #include <uiomux/uiomux_blocks.h>
 
-typedef struct _UIOMux {
-  int fd;
-  uiomux_blockmask_t blocks;
-} UIOMux;
+/***********************************************************
+ * Library-private defines
+ */
+
+#define UIOMUX_BLOCK_MAX 16
+
+#define UIOMUX_STATE_VERSION 1
+
+/***********************************************************
+ * Library-private Types
+ */
+
+struct uiomux_block {
+  pthread_mutex_t mutex;
+};
+
+struct uiomux_state {
+  /* The base address of the memory map */
+  void * proper_address;
+
+  /* Version of this state */
+  int version;
+
+  /* Number of blocks allocated and initialized */
+  int num_blocks;
+
+  /* Blocks */
+  struct uiomux_block blocks[UIOMUX_BLOCK_MAX]; 
+};
+
+struct uiomux {
+  struct uiomux_state * shared_state;
+};
+
+/***********************************************************
+ * Library-private functions
+ */
+
+struct uiomux_state *
+get_shared_state (void);
+
+int
+init_shared_state (struct uiomux_state * state);
+
+int
+unmap_shared_state (struct uiomux_state * state);
+
+int
+destroy_shared_state (struct uiomux_state * state);
 
 #endif /* __UIOMUX_PRIVATE_H__ */

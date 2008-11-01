@@ -3,10 +3,14 @@
 #include "config.h"
 #endif
 
+#include <unistd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 
 #include "uiomux_private.h"
 
@@ -16,27 +20,136 @@ static char * devname = "/dev/uio0";
 static char * devname = "/dev/zero";
 #endif
 
-static uiomux_blockmask_t allocated = UIOMUX_BLOCK_NONE;
+static uiomux_blockmask_t allocated = UIOMUX_NONE;
+
+struct uiomux *
+uiomux_open (uiomux_blockmask_t blocks)
+{
+  struct uiomux * uiomux;
+  struct uiomux_state * state;
+
+  /* Get the shared state, creating and initializing it if necessary */
+  state = get_shared_state();
+
+  if (state == NULL) return NULL;
+
+  uiomux = (struct uiomux *)malloc(sizeof(*uiomux));
+
+  uiomux->shared_state = state;
+
+  /* Allocate space for register store */
+  
+  return uiomux;
+}
+
+int
+uiomux_close (struct uiomux * uiomux)
+{
+  if (uiomux == NULL) return -1;
+
+  unmap_shared_state (uiomux->shared_state);
+  free (uiomux);
+
+  return 0;
+}
+
+int
+uiomux_system_reset (struct uiomux * uiomux)
+{
+  if (uiomux == NULL) return -1;
+
+  if (uiomux->shared_state == NULL) {
+    uiomux->shared_state = get_shared_state ();
+  }
+    
+  init_shared_state (uiomux->shared_state);
+
+  return 0;
+}
+
+int
+uiomux_system_destroy (struct uiomux * uiomux)
+{
+  destroy_shared_state (uiomux->shared_state);
+
+  uiomux_close (uiomux);
+
+  return 0;
+}
+
+int
+uiomux_lock (struct uiomux * uiomux, uiomux_blockmask_t blockmask)
+{
+  struct uiomux_block * block;
+  int i;
+
+  /* lock mutex */
+  for (i=0; i < UIOMUX_BLOCK_MAX; i++) {
+    if (blockmask & (1<<i)) {
+#ifdef DEBUG
+      printf ("Locking block %d\n", i);
+      printf ("uiomux: %x\n", uiomux);
+      printf ("uiomux->shared_state: %x\n", uiomux->shared_state);
+#endif
+      block = &uiomux->shared_state->blocks[i];
+      pthread_mutex_lock (&block->mutex);
+    }
+  }
+
+  /* restore registers */
+
+  return 0;
+}
+
+int
+uiomux_unlock (struct uiomux * uiomux, uiomux_blockmask_t blockmask)
+{
+  struct uiomux_block * block;
+  int i;
+
+  /* store registers */
+
+  /* unlock mutex */
+  for (i=UIOMUX_BLOCK_MAX-1; i >= 0; i--) {
+    if (blockmask & (1<<i)) {
+#ifdef DEBUG
+      printf ("Unlocking block %d\n", i);
+#endif
+      block = &uiomux->shared_state->blocks[i];
+      pthread_mutex_unlock (&block->mutex);
+    }
+  }
+
+  return 0;
+}
 
 uiomux_blockmask_t
 uiomux_query(void)
 {
-  return UIOMUX_BLOCK_SH_BEU |
-         UIOMUX_BLOCK_SH_CEU |
-         UIOMUX_BLOCK_SH_VPU ;
+  return UIOMUX_SH_BEU |
+         UIOMUX_SH_CEU |
+         UIOMUX_SH_JPU |
+         UIOMUX_SH_VEU |
+         UIOMUX_SH_VPU ;
 }
 
 const char *
 uiomux_name(uiomux_blockmask_t block)
 {
   switch (block) {
-    case UIOMUX_BLOCK_SH_BEU:
+    case UIOMUX_SH_BEU:
       return "BEU";
       break;
-    case UIOMUX_BLOCK_SH_CEU:
+    case UIOMUX_SH_CEU:
       return "CEU";
       break;
-    case UIOMUX_BLOCK_SH_VPU:
+    case UIOMUX_SH_JPU:
+      return "JPU";
+      break;
+    case UIOMUX_SH_VEU:
+      return "VEU";
+      break;
+    case UIOMUX_SH_VPU:
       return "VPU";
       break;
     default:
@@ -44,6 +157,7 @@ uiomux_name(uiomux_blockmask_t block)
   }
 }
 
+#if 0
 UIOMux *
 uiomux_open (uiomux_blockmask_t blocks)
 {
@@ -104,6 +218,7 @@ uiomux_read(UIOMux * uiomux)
 
   return 0;
 }
+#endif
 
 #if 0
 int

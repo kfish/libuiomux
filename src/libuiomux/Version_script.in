@@ -10,6 +10,12 @@
         global:
 		uiomux_open;
                 uiomux_close;
+		uiomux_lock;
+		uiomux_unlock;
+		uiomux_query;
+
+                uiomux_system_reset;
+                uiomux_system_destroy;
 
         local:
                 *;

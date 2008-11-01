@@ -13,7 +13,8 @@ noinst_HEADERS = \
 	uiomux_private.h
 
 libuiomux_la_SOURCES = \
+        state.c \
 	uiomux.c
 
 libuiomux_la_LDFLAGS = -version-info @SHARED_VERSION_INFO@ @SHLIB_VERSION_ARG@
-libuiomux_la_LIBADD =
+libuiomux_la_LIBADD = $(PTHREAD_LIBS) $(RT_LIBS)

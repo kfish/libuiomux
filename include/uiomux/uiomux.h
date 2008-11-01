@@ -154,7 +154,7 @@ uiomux_query(void);
 /**
  * Retrieve a printable name for an IP block:
  */
-const char * uiomux_name();
+const char * uiomux_name(uiomux_blockmask_t block);
 
 /**
  * Create a new UIOMux object,
@@ -175,6 +175,32 @@ int
 uiomux_close (UIOMux * uiomux);
 
 /**
+ * Lock a UIOMux handle for access to specified blocks.
+ * \param uiomux A UIOMux handle
+ * \retval 0 Success
+ */
+int
+uiomux_lock (UIOMux * uiomux, uiomux_blockmask_t blockmask);
+
+/**
+ * Unlock a UIOMux handle for access to specified blocks.
+ * \param uiomux A UIOMux handle
+ * \retval 0 Success
+ */
+int
+uiomux_unlock (UIOMux * uiomux, uiomux_blockmask_t blockmask);
+
+/**
+ * Destroy the UIOMux system, removing exclusive access, removing memory
+ * maps, etc.
+ * \param uiomux A UIOMux handle
+ * \retval 0 Success
+ */
+int
+uiomux_system_destroy (UIOMux * uiomux);
+
+#if 0
+/**
  * Poll for pending events for particular blocks only.
  *
  * \param uiomux A UIOMux handle
@@ -194,6 +220,7 @@ uiomux_poll(UIOMux * uiomux, uiomux_blockmask_t blocks);
  */
 int
 uiomux_read(UIOMux * uiomux);
+#endif
 
 #if 0
 /*

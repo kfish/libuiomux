@@ -26,15 +26,21 @@ typedef int uiomux_blockmask_t;
  */
 
 /** Specifies that no blocks are selected */
-#define UIOMUX_BLOCK_NONE (0)
+#define UIOMUX_NONE 0
 
 /** Blending Engine Unit */
-#define UIOMUX_BLOCK_SH_BEU (1<<0)
+#define UIOMUX_SH_BEU (1<<0)
 
 /** Capture Engine Unit */
-#define UIOMUX_BLOCK_SH_CEU (1<<1)
+#define UIOMUX_SH_CEU (1<<1)
+
+/** JPEG Unit */
+#define UIOMUX_SH_JPU (1<<2)
 
 /** Video Processing Unit */
-#define UIOMUX_BLOCK_SH_VPU (1<<2)
+#define UIOMUX_SH_VEU (1<<3)
+
+/** Video Processing Unit */
+#define UIOMUX_SH_VPU (1<<4)
 
 #endif /* __UIOMUX_BLOCKS_H__ */

@@ -8,5 +8,5 @@ Description: A library for sharing access to UIO devices
 Requires:
 Version: @VERSION@
 Libs: -L${libdir}
-Libs.private:
+Libs.private: @PTHREAD_LIBS@
 Cflags: -I${includedir}

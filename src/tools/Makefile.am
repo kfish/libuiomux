@@ -4,7 +4,7 @@ INCLUDES = -I$(top_builddir) \
            -I$(top_srcdir)/include
 
 UIOMUXDIR = ../libuiomux
-UIOMUX_LIBS = $(UIOMUXDIR)/libuiomux.la
+UIOMUX_LIBS = $(UIOMUXDIR)/libuiomux.la $(PTHREAD_LIBS) $(RT_LIBS)
 
 bin_PROGRAMS = uiomux
 
