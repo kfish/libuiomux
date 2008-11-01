@@ -118,7 +118,9 @@ map_shared_state (void)
   if (state->proper_address != (void *)state) {
     debug_info ("map_shared_state: Not mapped at proper address, trying with MAP_FIXED ...");
     exact_address = state->proper_address;
+#ifdef DEBUG
     fprintf (stderr, "map_shared_state: exact_address %x\n", exact_address);
+#endif
     munmap ((void *)state, size);
     state = (struct uiomux_state *) mmap(exact_address, size, PROT_READ | PROT_WRITE,
                                          MAP_SHARED | MAP_FIXED, shm_descr, (long)0);
@@ -145,6 +147,9 @@ map_shared_state (void)
 int
 unmap_shared_state (struct uiomux_state * state)
 {
+  if (state == NULL) return -1;
+  if (state != state->proper_address) return -2;
+
   return munmap ((void *)state, sizeof (struct uiomux_state));
 }
 

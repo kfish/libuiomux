@@ -14,6 +14,8 @@
 
 #include "uiomux_private.h"
 
+/* #define DEBUG */
+
 #if 0
 static char * devname = "/dev/uio0";
 #else
@@ -21,6 +23,46 @@ static char * devname = "/dev/zero";
 #endif
 
 static uiomux_blockmask_t allocated = UIOMUX_NONE;
+
+static int
+uiomux_unlock_all (struct uiomux * uiomux)
+{
+  struct uiomux_block * block;
+  int i;
+
+  /* store registers */
+
+  /* unlock mutex */
+  for (i=UIOMUX_BLOCK_MAX-1; i >= 0; i--) {
+#ifdef DEBUG
+    printf ("uiomux_unlock_all: Unlocking block %d\n", i);
+#endif
+    block = &uiomux->shared_state->blocks[i];
+    pthread_mutex_unlock (&block->mutex);
+  }
+
+  return 0;
+}
+
+static void
+uiomux_on_exit (int exit_status, void * arg)
+{
+  struct uiomux * uiomux = (struct uiomux *)arg;
+
+  if (uiomux == NULL) return -1;
+
+#ifdef DEBUG
+  fprintf (stderr, "uiomux_on_exit: IN\n");
+#endif
+
+  /* Only attempt the unlock and free if the shared_state is still correctly
+   * mapped at its proper address */
+  if (uiomux->shared_state && uiomux->shared_state->proper_address == uiomux->shared_state) {
+    uiomux_unlock_all (uiomux);
+    unmap_shared_state(uiomux->shared_state); 
+    free (uiomux);
+  }
+}
 
 struct uiomux *
 uiomux_open (uiomux_blockmask_t blocks)
@@ -38,6 +80,9 @@ uiomux_open (uiomux_blockmask_t blocks)
   uiomux->shared_state = state;
 
   /* Allocate space for register store */
+
+  /* Register on_exit() cleanup function */
+  on_exit (uiomux_on_exit, uiomux);
   
   return uiomux;
 }
@@ -47,7 +92,11 @@ uiomux_close (struct uiomux * uiomux)
 {
   if (uiomux == NULL) return -1;
 
+  uiomux_unlock_all (uiomux);
   unmap_shared_state (uiomux->shared_state);
+
+  /* Mark this as NULL to invalidate uiomux for uiomux_on_exit */
+  uiomux->shared_state = NULL;
   free (uiomux);
 
   return 0;
