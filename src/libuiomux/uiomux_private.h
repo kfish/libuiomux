@@ -23,6 +23,7 @@
 
 struct uiomux_block {
   struct uio * uio;
+  int nr_registers;
   long * registers;
 };
 

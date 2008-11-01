@@ -93,6 +93,7 @@ uiomux_open (uiomux_blockmask_t blocks)
         printf ("Allocating %ld bytes for %s registers...\n",
                 block->uio->mmio.size, block->uio->dev.name);
 #endif
+        block->nr_registers = block->uio->mmio.size / 4;
         block->registers = (long *)malloc(block->uio->mmio.size);
       }
     }
@@ -158,22 +159,31 @@ int
 uiomux_lock (struct uiomux * uiomux, uiomux_blockmask_t blockmask)
 {
   pthread_mutex_t * mutex;
-  int i;
+  struct uiomux_block * block;
+  unsigned long *reg_base;
+  int i, k;
 
-  /* lock mutex */
   for (i=0; i < UIOMUX_BLOCK_MAX; i++) {
     if (blockmask & (1<<i)) {
+      /* lock mutex */
 #ifdef DEBUG
       printf ("Locking block %d\n", i);
-      printf ("uiomux: %x\n", uiomux);
-      printf ("uiomux->shared_state: %x\n", uiomux->shared_state);
 #endif
       mutex = &uiomux->shared_state->mutex[i];
       pthread_mutex_lock (mutex);
+
+      /* restore registers */
+      block = &uiomux->blocks[i];
+      if (block->uio) {
+        reg_base = block->uio->mmio.iomem;
+        for (k=0; k < block->nr_registers; k++) {
+          reg_base[k] = block->registers[k];
+        }
+      }
+
     }
   }
 
-  /* restore registers */
 
   return 0;
 }
@@ -182,13 +192,23 @@ int
 uiomux_unlock (struct uiomux * uiomux, uiomux_blockmask_t blockmask)
 {
   pthread_mutex_t * mutex;
-  int i;
+  struct uiomux_block * block;
+  unsigned long *reg_base;
+  int i, k;
 
-  /* store registers */
 
-  /* unlock mutex */
   for (i=UIOMUX_BLOCK_MAX-1; i >= 0; i--) {
     if (blockmask & (1<<i)) {
+      /* store registers */
+      block = &uiomux->blocks[i];
+      if (block->uio) {
+        reg_base = block->uio->mmio.iomem;
+        for (k=0; k < block->nr_registers; k++) {
+          block->registers[k] = reg_base[k];
+        }
+      }
+
+      /* unlock mutex */
 #ifdef DEBUG
       printf ("Unlocking block %d\n", i);
 #endif
