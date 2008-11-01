@@ -35,6 +35,30 @@ uiomux_unlock_all (struct uiomux * uiomux)
   return 0;
 }
 
+/**
+ * uiomux_on_exit()
+ *
+ * This function is registered by uiomux_open() to be called on exit to deallocate
+ * any resources still held by this UIOMux* handle. In particular, it ensures to
+ * unlock any held mutexes before exiting, otherwise they remain locked in the
+ * system.
+ *
+ * In order to do so, it first attempts to check if the UIOMux* handle is still
+ * valid, ie. whether or not it has already been freed. It does this by checking
+ * the shared_state value, which is the first member of struct uiomux. Note that
+ * in the common case where uiomux has already been freed, this will lead to the
+ * following error being reported by valgrind:
+ *
+ * ==31337== Invalid read of size 4
+ * ==31337==    at 0x403C909: uiomux_on_exit (uiomux.c:51)
+ * ==31337==    by 0x408D528: exit (in /lib/tls/i686/cmov/libc-2.6.1.so)
+ * ==31337==    by 0x8048699: main (uiomux.c:108)
+ * ==31337==  Address 0x41AB028 is 0 bytes inside a block of size 196 free'd
+ * ==31337==    at 0x402237F: free (vg_replace_malloc.c:233)
+ * ==31337==    by 0x403C7E0: uiomux_free (uiomux.c:111)
+ * ==31337==    by 0x403C8E1: uiomux_close (uiomux.c:122)
+ * ==31337==    by 0x804868D: main (uiomux.c:65)
+ */
 static void
 uiomux_on_exit (int exit_status, void * arg)
 {
