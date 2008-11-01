@@ -118,7 +118,10 @@ uio_open (const char * name)
   if (uio == NULL) return NULL;
 
   ret = locate_uio_device(name, &uio->dev);
-  if (ret < 0) return NULL;
+  if (ret < 0) {
+    uio_close (uio);
+    return NULL;
+  }
 	
 #ifdef DEBUG
   printf("uio_open: Found matching UIO device at %s\n", uio_dev.path);
