@@ -18,7 +18,7 @@ main (int argc, char *argv[])
   int ret;
 
   INFO ("Opening UIOMux for BEU");
-  uiomux = uiomux_open(UIOMUX_SH_BEU);
+  uiomux = uiomux_open();
   if (uiomux == NULL)
     FAIL ("Opening UIOMux");
 

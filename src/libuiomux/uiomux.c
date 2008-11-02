@@ -84,7 +84,7 @@ uiomux_on_exit (int exit_status, void * arg)
 }
 
 struct uiomux *
-uiomux_open (uiomux_blockmask_t blocks)
+uiomux_open (void)
 {
   struct uiomux * uiomux;
   struct uiomux_state * state;
@@ -179,7 +179,7 @@ uiomux_system_destroy (struct uiomux * uiomux)
 }
 
 int
-uiomux_lock (struct uiomux * uiomux, uiomux_blockmask_t blockmask)
+uiomux_lock (struct uiomux * uiomux, uiomux_resource_t blockmask)
 {
   pthread_mutex_t * mutex;
   struct uiomux_block * block;
@@ -215,7 +215,7 @@ uiomux_lock (struct uiomux * uiomux, uiomux_blockmask_t blockmask)
 }
 
 int
-uiomux_unlock (struct uiomux * uiomux, uiomux_blockmask_t blockmask)
+uiomux_unlock (struct uiomux * uiomux, uiomux_resource_t blockmask)
 {
   pthread_mutex_t * mutex;
   struct uiomux_block * block;
@@ -250,7 +250,7 @@ uiomux_unlock (struct uiomux * uiomux, uiomux_blockmask_t blockmask)
 }
 
 const char *
-uiomux_name(uiomux_blockmask_t block)
+uiomux_name(uiomux_resource_t block)
 {
   switch (block) {
     case UIOMUX_SH_BEU:
@@ -273,10 +273,10 @@ uiomux_name(uiomux_blockmask_t block)
   }
 }
 
-uiomux_blockmask_t
+uiomux_resource_t
 uiomux_query(void)
 {
-  uiomux_blockmask_t blocks = UIOMUX_NONE;
+  uiomux_resource_t blocks = UIOMUX_NONE;
   struct uio * uio;
   const char * name = NULL;
   int i;
@@ -296,7 +296,7 @@ uiomux_query(void)
 int
 uiomux_info (struct uiomux * uiomux)
 {
-  uiomux_blockmask_t blocks = UIOMUX_NONE;
+  uiomux_resource_t blocks = UIOMUX_NONE;
   struct uiomux_state * state;
   struct uiomux_block * block;
   int i;

@@ -2,7 +2,7 @@
 #ifndef __UIOMUX_H__
 #define __UIOMUX_H__
 
-#include <uiomux/uiomux_blocks.h>
+#include <uiomux/resource.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -10,49 +10,33 @@ extern "C" {
 
 /** \mainpage
  *
- * \section intro UIOMux: A multiplexor for accessing Userspace IO devices
+ * \section intro UIOMux: A conflict manager for system resources, including
+ * UIO devices.
  *
  * This is the documentation for the UIOMux C API.
- * The role of the resource allocation manager is to
- * mediate access to the custom IP blocks in the SuperH MobileR series SoC.
  *
- * UIOMux multiplexes access to the IP blocks which are made available via the
- * Linux kernel's UIO interface.
+ * The user-level shared library libuiomux manages a shared memory segment
+ * containing mutexes for each managed resource. This segment and its mutexes
+ * are shared amongst all processes and threads on the system, to provide
+ * system-wide locking. In this way, libuiomux can be used to manage
+ * contention across multiple simultaneous processes and threads.  
  *
- * Features:
- *  - Allows multiple IP blocks to be shared via a single kernel-provided
- *    UIO device
- *  - Efficiency: mediates access, but does not interfere with it.
- *    Users must understand that they co-operatively access the
- *    all devices available via UIO; it is not possible via this
- *    interface for the kernel to provide memory protection
+ * UIOMux allows simultaneous locking of access to multiple resources, with
+ * deterministic locking and unlocking order to avoid circular waiting.
+ * Processes or threads requring simultaneous access to more than one resource
+ * should lock and unlock them simultaneously via libuiomux.
  *
- *  - Portability: Allows userspace applications to query
- *    which blocks are available on this platform.
- *    the response to that can be configured at build time
- *    or set in a system config file (/etc/uiomux/uiomux.conf)
- *    but the point is to allow application portability
- *    and the possibility to ship a single codec binary or
- *    application binary that works on multiple similar chips
- *    (eg. an application could fall back to software if a needed
- *    block is not available, or disable relevant funtionality at
- *    runtime)
+ * UIOMux will save and restore of memory-mapped IO registers associated with
+ * a UIO device. Registers are saved on uiomux_unlock() and restored on
+ * uiomux_lock(), if intervening users have used the device.
+ *
+ * Additionally, UIOMux can be queried for whether or not a resource is
+ * available on the currently running system. This allows a vendor to
+ * create a single codec or application binary that works across a family
+ * of similar processors. An application can fall back to software if a
+ * required hardware resource is not available, or disable relevant
+ * funtionality at runtime.
  * 
- * UIOMux keeps track of events for each * UIO block, and information
- * about the owner of each.
- * 
- * Attempts to access a claim access to a block that is already in use 
- * will fail, as will attempts to poll for events on a block that has
- * not been claimed.
- * 
- * The user of UIOMux can ask for multiple blocks atomically, so that if
- * it is not possible to get exclusive access to all of a group of blocks,
- * then the request fails. This interface is provided in order to
- * reduce contention and livelock, for example an applications requesting
- * exclusive access to both an encoder and decoder, or a camera and an
- * encoder. In order to specify operatiosn on multiple blocks, block
- * identifiers are bitmasked together.
- *
  * \subsection contents Contents
  * 
  * - \link uiomux.h uiomux.h \endlink:
@@ -122,13 +106,29 @@ extern "C" {
 /** \file
  * The libuiomux C API.
  *
- * \section general Generic semantics
+ * \section query Query
  *
- * All access is managed via a UIOMux handle. This can be instantiated
- * by calling:
- * - uiomux_open() - Requested access to specified IP blocks
+ * At any time, an application may retrieve a printable name for a resource
+ * by calling uiomux_name(). 
+ * To query which resources are available on the running system, call
+ * uiomux_query().
  *
- * To finish using a UIOMux handle, it should be closed with uiomux_close().
+ * \section locking Locking and unlocking
+ *
+ * A process or thread wishing to use the locking facilities of libuiomux
+ * should start by calling uiomux_open() to obtain a UIOMux* handle.
+ *
+ * To request exclusive access to a resource or a set of resources, call
+ * uiomux_lock(), passing as argument the name of a resource, or multiple
+ * resource names OR'd together. Each call to uiomux_lock() must be paired
+ * with a corresponding call to uiomux_unlock().  Failure to unlock can
+ * lead to system-wide starvation of the locked resource. Note however that
+ * all locks obtained via libuiomux will be automatically unlocked on program
+ * termination to minimize the potential damage caused by rogue processes.
+ *
+ * Finally, each process or thread that opened a UIOMux* handle should
+ * close it by calling uiomux_close(). This will remove associated memory maps,
+ * unlock locked resources and mark used memory for deallocation.
  */
 
 /**
@@ -139,22 +139,15 @@ typedef void UIOMux;
 
 /**
  * Query which blocks are available on this platform.
- * the response to that can be configured at build time
- * or set in a system config file (/etc/uiomux/uiomux.conf)
- * but the point is to allow application portability
- * and the possibility to ship a single codec binary or
- * application binary that works on multiple similar chips
- * (eg. an application could fall back to software if a needed
- * block is not available, or disable relevant funtionality at
- * runtime)
+ * \retval Bitwise OR of available resource names.
  */
-uiomux_blockmask_t
+uiomux_resource_t
 uiomux_query(void);
 
 /**
  * Retrieve a printable name for an IP block:
  */
-const char * uiomux_name(uiomux_blockmask_t block);
+const char * uiomux_name(uiomux_resource_t resource);
 
 /**
  * Print info about UIO maps to stdout
@@ -166,13 +159,11 @@ uiomux_info (UIOMux * uiomux);
 
 /**
  * Create a new UIOMux object,
- * gaining access to an IP block. This then allows access to a list of
- * maps relevant to that IP block, usable by a user of that IP block.
  * 
- * \retval NULL on system error; check errno for details
+ * \retval NULL on system error; check errno for details.
  */
 UIOMux *
-uiomux_open (uiomux_blockmask_t blockmask);
+uiomux_open (void);
 
 /**
  * Close a UIOMux handle, removing exclusive access, removing memory maps, etc.
@@ -185,22 +176,39 @@ uiomux_close (UIOMux * uiomux);
 /**
  * Lock a UIOMux handle for access to specified blocks.
  * \param uiomux A UIOMux handle
+ * \param resources A named resource, or multiple OR'd together
  * \retval 0 Success
  */
 int
-uiomux_lock (UIOMux * uiomux, uiomux_blockmask_t blockmask);
+uiomux_lock (UIOMux * uiomux, uiomux_resource_t resources);
 
 /**
  * Unlock a UIOMux handle for access to specified blocks.
  * \param uiomux A UIOMux handle
+ * \param resources A named resource, or multiple OR'd together
  * \retval 0 Success
  */
 int
-uiomux_unlock (UIOMux * uiomux, uiomux_blockmask_t blockmask);
+uiomux_unlock (UIOMux * uiomux, uiomux_resource_t resources);
 
 /**
- * Destroy the UIOMux system, removing exclusive access, removing memory
- * maps, etc.
+ * Reset the UIOMux system, initializing the associated shared memory segment
+ * and all shared mutexes. Note that this is done transparently by the
+ * first process to call uiomux_open(), so this function does not need to be
+ * used by normal applications. It is usually called by the commandline tool
+ * 'uiomux reset'.
+ * \param uiomux A UIOMux handle
+ * \retval 0 Success
+ */
+int
+uiomux_system_reset (UIOMux * uiomux);
+
+/**
+ * Destroy the UIOMux system, removing the associated shared memory segment
+ * and destroying all shared mutexes. This will make UIOMux unusable by
+ * other applications which have previously opened it, so must not be used
+ * by normal applications. It is usually called by the commandline tool
+ * 'uiomux destroy'.
  * \param uiomux A UIOMux handle
  * \retval 0 Success
  */

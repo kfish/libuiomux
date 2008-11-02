@@ -43,7 +43,7 @@ usage (void)
 static void
 query (void)
 {
-  uiomux_blockmask_t blocks;
+  uiomux_resource_t blocks;
   int i;
 
   blocks = uiomux_query ();
@@ -60,7 +60,7 @@ info (void)
 {
   struct uiomux * uiomux;
 
-  uiomux = uiomux_open (0);
+  uiomux = uiomux_open ();
   uiomux_info (uiomux);
   uiomux_close (uiomux);
 }
@@ -70,7 +70,7 @@ reset (void)
 {
   struct uiomux * uiomux;
 
-  uiomux = uiomux_open (0);
+  uiomux = uiomux_open ();
   printf ("Resetting UIOMux system ...\n");
   uiomux_system_reset (uiomux);
   uiomux_close (uiomux);
@@ -81,7 +81,7 @@ destroy (void)
 {
   struct uiomux * uiomux;
 
-  uiomux = uiomux_open (0);
+  uiomux = uiomux_open ();
   printf ("Destroying UIOMux system ...\n");
   uiomux_system_destroy (uiomux);
   exit (0);

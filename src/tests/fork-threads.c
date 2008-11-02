@@ -80,7 +80,7 @@ main (int argc, char *argv[])
   int  ret;
 
   INFO ("Opening UIOMux for BEU");
-  uiomux = uiomux_open(UIOMUX_SH_BEU | UIOMUX_SH_CEU | UIOMUX_SH_JPU | UIOMUX_SH_VEU);
+  uiomux = uiomux_open();
   if (uiomux == NULL)
     FAIL ("Opening UIOMux");
 

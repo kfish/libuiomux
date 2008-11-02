@@ -13,7 +13,7 @@ main (int argc, char *argv[])
   int ret;
 
   INFO ("Opening UIOMux for BEU");
-  uiomux = uiomux_open(UIOMUX_SH_BEU);
+  uiomux = uiomux_open();
   if (uiomux == NULL)
     FAIL ("Opening UIOMux");
 
@@ -23,7 +23,7 @@ main (int argc, char *argv[])
     FAIL ("Closing UIOMux");
 
   INFO ("Re-opening UIOMux for BEU");
-  uiomux_2 = uiomux_open(UIOMUX_SH_BEU);
+  uiomux_2 = uiomux_open();
   if (uiomux_2 == NULL)
     FAIL ("Re-opening UIOMux for BEU");
 

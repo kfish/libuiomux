@@ -5,7 +5,7 @@
 #include "config.h"
 #endif
 
-#include <uiomux/uiomux_blocks.h>
+#include <uiomux/resource.h>
 
 #include "uio.h"
 
@@ -74,6 +74,6 @@ int
 uiomux_close (struct uiomux * uiomux);
 
 const char *
-uiomux_name(uiomux_blockmask_t block);
+uiomux_name(uiomux_resource_t resource);
 
 #endif /* __UIOMUX_PRIVATE_H__ */
