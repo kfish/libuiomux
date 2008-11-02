@@ -103,6 +103,9 @@ main (int argc, char *argv[])
     reset ();
   } else if (!strncmp (argv[1], "destroy", 8)) {
     destroy ();
+  } else {
+    usage();
+    exit (1);
   }
 
   exit (0);
