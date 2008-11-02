@@ -49,7 +49,7 @@ on the currently running system.
 Commandline tool
 ----------------
 
-Usage: uiomux <command> [options]
+Usage: uiomux <command>
 
 uiomux is a tool for querying UIO and managing the UIOMux state.
 

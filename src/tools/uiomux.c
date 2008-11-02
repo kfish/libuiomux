@@ -18,7 +18,7 @@ version (void)
 static void
 usage (void)
 {
-  printf ("Usage: uiomux <command> [options]\n\n");
+  printf ("Usage: uiomux <command>\n\n");
 
   printf ("uiomux is a tool for querying UIO and managing the UIOMux state.\n");
 
