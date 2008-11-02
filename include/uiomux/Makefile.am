@@ -2,4 +2,4 @@
 
 # Include files to install
 uiomuxincludedir = $(includedir)/uiomux
-uiomuxinclude_HEADERS = uiomux.h resource.h arch_sh.h
+uiomuxinclude_HEADERS = uiomux.h resource.h arch_sh.h system.h

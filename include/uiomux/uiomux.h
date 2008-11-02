@@ -191,29 +191,7 @@ uiomux_lock (UIOMux * uiomux, uiomux_resource_t resources);
 int
 uiomux_unlock (UIOMux * uiomux, uiomux_resource_t resources);
 
-/**
- * Reset the UIOMux system, initializing the associated shared memory segment
- * and all shared mutexes. Note that this is done transparently by the
- * first process to call uiomux_open(), so this function does not need to be
- * used by normal applications. It is usually called by the commandline tool
- * 'uiomux reset'.
- * \param uiomux A UIOMux handle
- * \retval 0 Success
- */
-int
-uiomux_system_reset (UIOMux * uiomux);
-
-/**
- * Destroy the UIOMux system, removing the associated shared memory segment
- * and destroying all shared mutexes. This will make UIOMux unusable by
- * other applications which have previously opened it, so must not be used
- * by normal applications. It is usually called by the commandline tool
- * 'uiomux destroy'.
- * \param uiomux A UIOMux handle
- * \retval 0 Success
- */
-int
-uiomux_system_destroy (UIOMux * uiomux);
+#include <uiomux/system.h>
 
 #ifdef __cplusplus
 }
