@@ -1,6 +1,13 @@
 #ifndef __UIOMUX_RESOURCE_H__
 #define __UIOMUX_RESOURCE_H__
 
+/** \file
+ * UIOMux resource type.
+ * 
+ * IP blocks are accessed by symbolic name.
+ * This file includes architecture-specific resource names.
+ */
+
 /**
  * A mask of multiple resources. A UIOMux handle corresponds to a set of
  * blocks atomically allocated together.

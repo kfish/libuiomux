@@ -42,10 +42,10 @@ extern "C" {
  * Documentation of the UIOMux C API
  *
  * - \link configuration Configuration \endlink:
- * Customizing libuiomux to only read or write.
+ * Customizing libuiomux
  *
  * - \link building Building \endlink:
- * \section API
+ * Building applications against libuiomux
  * 
  */
 
@@ -132,7 +132,7 @@ extern "C" {
 
 /**
  * An opaque handle to a set of blocks. This is returned by uiomux_open(),
- * and is passed to all other uiomux_* functions.
+ * and is passed to other uiomux_* functions.
  */
 typedef void UIOMux;
 
