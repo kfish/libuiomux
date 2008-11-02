@@ -207,46 +207,6 @@ uiomux_unlock (UIOMux * uiomux, uiomux_blockmask_t blockmask);
 int
 uiomux_system_destroy (UIOMux * uiomux);
 
-#if 0
-/**
- * Poll for pending events for particular blocks only.
- *
- * \param uiomux A UIOMux handle
- * \param blocks A UIOMux blockmask of blocks to request event notification for.
- * \retval -1 Access violation: returned on request for blocks that have not
- *            been claimed by \a uiomux.
- */
-int
-uiomux_poll(UIOMux * uiomux, uiomux_blockmask_t blocks);
-
-/**
- * read simply mimics the UIO read() interface, returning the number of
- * events available for the IP block
- * \param uiomux A UIOMux handle
- * \retval The number of pending UIO events for the blocks owned by
- *         \a uiomux
- */
-int
-uiomux_read(UIOMux * uiomux);
-#endif
-
-#if 0
-/*
- * write data:
- * \param uiomux A UIOMux handle
- */
-int
-uiomux_write(UIOMux * uiomux);
-
-/*
- * request memory map:
- * or query existing maps for this process?
- * \param uiomux A UIOMux handle
- */
-int
-uiomux_mmap(UIOMux * uiomux);
-#endif
-
 #ifdef __cplusplus
 }
 #endif
