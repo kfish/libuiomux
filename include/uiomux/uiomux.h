@@ -10,8 +10,7 @@ extern "C" {
 
 /** \mainpage
  *
- * \section intro UIOMux: A conflict manager for system resources, including
- * UIO devices.
+ * \section intro UIOMux: A conflict manager for system resources, including UIO devices.
  *
  * This is the documentation for the UIOMux C API.
  *
