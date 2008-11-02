@@ -77,7 +77,7 @@ extern "C" {
  * available:
  *
  <pre>
- PKG_CHECK_MODULES(UIOMUX, uiomux >= 0.5.0,
+ PKG_CHECK_MODULES(UIOMUX, uiomux >= 0.6.0,
                    HAVE_UIOMUX="yes", HAVE_UIOMUX="no")
  if test "x$HAVE_UIOMUX" = "xyes" ; then
    AC_SUBST(UIOMUX_CFLAGS)

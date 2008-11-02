@@ -106,6 +106,8 @@ uio_close (struct uio * uio)
   if (uio->dev.name) free (uio->dev.name);
 
   free (uio);
+
+  return 0;
 }
 
 struct uio *
