@@ -1,3 +1,22 @@
+################################################################################
+# UIOMux: a conflict manager for system resources, including UIO devices.      #
+# Copyright (C) 2009 Renesas Technology Corp.                                  #
+#                                                                              #
+# This library is free software; you can redistribute it and/or                #
+# modify it under the terms of the GNU Library General Public                  #
+# License as published by the Free Software Foundation; either                 #
+# version 2 of the License, or (at your option) any later version.             #
+#                                                                              #
+# This library is distributed in the hope that it will be useful,              #
+# but WITHOUT ANY WARRANTY; without even the implied warranty of               #
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU            #
+# Library General Public License for more details.                             #
+#                                                                              #
+# You should have received a copy of the GNU Library General Public            #
+# License along with this library; if not, write to the Free Software          #
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA  02110-1301 USA #
+################################################################################
+
 # Process this file with autoconf to produce a configure script.
 AC_INIT
 AC_CONFIG_SRCDIR([src/libuiomux/uiomux.c])
@@ -9,6 +28,23 @@ AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE(libuiomux, 0.6.0)
 AM_CONFIG_HEADER(config.h)
 
+################################################################################
+# Set the shared versioning info, according to section 6.3 of the libtool info #
+# pages. CURRENT:REVISION:AGE must be updated immediately before each release: #
+#                                                                              #
+#   * If the library source code has changed at all since the last             #
+#     update, then increment REVISION (`C:R:A' becomes `C:r+1:A').             #
+#                                                                              #
+#   * If any interfaces have been added, removed, or changed since the         #
+#     last update, increment CURRENT, and set REVISION to 0.                   #
+#                                                                              #
+#   * If any interfaces have been added since the last public release,         #
+#     then increment AGE.                                                      #
+#                                                                              #
+#   * If any interfaces have been removed since the last public release,       #
+#     then set AGE to 0.                                                       #
+#                                                                              #
+################################################################################
 SHARED_VERSION_INFO="1:0:0"
 SHLIB_VERSION_ARG=""
 
