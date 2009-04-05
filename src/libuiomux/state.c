@@ -86,18 +86,18 @@ create_shared_state (void)
 
   shm_descr = shm_open (UIOMUX_SHM_NAME, O_CREAT | O_EXCL | O_RDWR, S_IRWXU);
   if (shm_descr == -1) {
-    debug_perror ("create_shraed_state: shm_open");
+    debug_perror ("create_shared_state: shm_open");
     return NULL;
   }
 
   if (ftruncate (shm_descr, size) < 0 ) {
-    debug_perror ("create_shraed_state: ftruncate");
+    debug_perror ("create_shared_state: ftruncate");
   }
 
   state = (struct uiomux_state *) mmap(0, size, PROT_READ | PROT_WRITE,
                                        MAP_SHARED, shm_descr, (long)0);
   if (state == MAP_FAILED) {
-    debug_perror ("create_shraed_state: mmap");
+    debug_perror ("create_shared_state: mmap");
     return NULL;
   }
 
