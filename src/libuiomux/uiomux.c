@@ -44,7 +44,7 @@ uiomux_unlock_all (struct uiomux * uiomux)
   /* unlock mutexes */
   for (i=UIOMUX_BLOCK_MAX-1; i >= 0; i--) {
 #ifdef DEBUG
-    printf ("uiomux_unlock_all: Unlocking block %d\n", i);
+    fprintf (stderr, "%s: Unlocking block %d\n", __func__, i);
 #endif
     mutex = &uiomux->shared_state->mutex[i].mutex;
     pthread_mutex_unlock (mutex);
@@ -88,7 +88,7 @@ uiomux_on_exit (int exit_status, void * arg)
   if (uiomux == NULL) return;
 
 #ifdef DEBUG
-  fprintf (stderr, "uiomux_on_exit: IN\n");
+  fprintf (stderr, "%s: IN\n", __func__);
 #endif
 
   /* Only attempt the unlock and free if the shared_state is still correctly
@@ -125,8 +125,8 @@ uiomux_open (void)
     if ((name = uiomux_name (1<<i)) != NULL) {
       if ((block->uio = uio_open (name)) != NULL) {
 #ifdef DEBUG
-        printf ("Allocating %ld bytes for %s registers...\n",
-                block->uio->mmio.size, block->uio->dev.name);
+        fprintf (stderr, "%s: Allocating %ld bytes for %s registers...\n", __func__,
+                 block->uio->mmio.size, block->uio->dev.name);
 #endif
         block->nr_registers = block->uio->mmio.size / 4;
         block->registers = (long *)malloc(block->uio->mmio.size);
@@ -208,7 +208,7 @@ uiomux_lock (struct uiomux * uiomux, uiomux_resource_t blockmask)
     if (blockmask & (1<<i)) {
       /* lock mutex */
 #ifdef DEBUG
-      printf ("Locking block %d\n", i);
+      fprintf (stderr, "%s: Locking block %d\n", __func__, i);
 #endif
       mutex = &uiomux->shared_state->mutex[i].mutex;
       pthread_mutex_lock (mutex);
@@ -257,7 +257,7 @@ uiomux_unlock (struct uiomux * uiomux, uiomux_resource_t blockmask)
 
       /* unlock mutex */
 #ifdef DEBUG
-      printf ("Unlocking block %d\n", i);
+      fprintf (stderr, "%s: Unlocking block %d\n", __func__, i);
 #endif
       mutex = &uiomux->shared_state->mutex[i].mutex;
       pthread_mutex_unlock (mutex);
