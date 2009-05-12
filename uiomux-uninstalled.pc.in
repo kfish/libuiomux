@@ -7,5 +7,5 @@ Name: uiomux uninstalled
 Description: A library for sharing access to UIO devices
 Requires:
 Version: @VERSION@
-Libs: -L${libdir}
+Libs: -L${libdir} -luiomux
 Cflags: -I${includedir}

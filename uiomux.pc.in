@@ -7,6 +7,6 @@ Name: uiomux
 Description: A library for sharing access to UIO devices
 Requires:
 Version: @VERSION@
-Libs: -L${libdir}
+Libs: -L${libdir} -luiomux
 Libs.private: @PTHREAD_LIBS@
 Cflags: -I${includedir}
