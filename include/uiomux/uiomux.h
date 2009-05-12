@@ -20,6 +20,7 @@
 #ifndef __UIOMUX_H__
 #define __UIOMUX_H__
 
+#include <stdlib.h>
 #include <uiomux/resource.h>
 
 #ifdef __cplusplus
@@ -207,6 +208,66 @@ uiomux_lock (UIOMux * uiomux, uiomux_resource_t resources);
  */
 int
 uiomux_unlock (UIOMux * uiomux, uiomux_resource_t resources);
+
+/**
+ * Wait for a UIO managed resource to complete its activity.
+ * \param uiomux A UIOMux handle
+ * \param resources A named resource
+ * \retval 0 Success
+ */
+int
+uiomux_sleep (UIOMux * uiomux, uiomux_resource_t resource);
+
+/*
+ * Get the address and size of the MMIO region for a UIO managed resource.
+ * \param uiomux A UIOMux handle
+ * \param resource A single named resource
+ * \param address Return for address (ignored if NULL)
+ * \param size Return for size (ignored if NULL)
+ * \param iomem Return for iomem (ignored if NULL)
+ * \returns Address of MMIO region
+ * \retval 0 Failure: resource not managed, or more than one resource given.
+ */
+unsigned long
+uiomux_get_mmio (UIOMux * uiomux, uiomux_resource_t resource,
+                 unsigned long * address, unsigned long * size, void ** iomem);
+
+/*
+ * Get the address and size of the user memory region for a UIO managed resource.
+ * \param uiomux A UIOMux handle
+ * \param resource A single named resource
+ * \param address Return for address (ignored if NULL)
+ * \param size Return for size (ignored if NULL)
+ * \param iomem Return for iomem (ignored if NULL)
+ * \returns Address of user memory region
+ * \retval 0 Failure: resource not managed, or more than one resource given.
+ */
+unsigned long
+uiomux_get_mem (UIOMux * uiomux, uiomux_resource_t resource,
+                unsigned long * address, unsigned long * size, void ** iomem);
+
+/**
+ * Allocate iomem from a UIO managed resource.
+ * \param uiomux A UIOMux handle
+ * \param resource A single named resource
+ * \returns Address of allocated memory
+ * \retval NULL Failure: unable to allocate, or attempt to allocate
+ * from more than one resource.
+ */
+void *
+uiomux_malloc (UIOMux * uiomux, uiomux_resource_t resource,
+               size_t size, int align);
+
+/**
+ * Free iomem from a UIO managed resource.
+ * \param uiomux A UIOMux handle
+ * \param resource A single named resource
+ * \param address The address to free
+ * \param size The size to free
+ */
+void
+uiomux_free (UIOMux * uiomux, uiomux_resource_t resource,
+             void * address, size_t size);
 
 #include <uiomux/system.h>
 

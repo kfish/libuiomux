@@ -63,6 +63,9 @@ struct uiomux_state {
 
   /* Mutexes */
   struct uiomux_mutex mutex[UIOMUX_BLOCK_MAX];
+
+  /* Memory management */
+  unsigned char * mem_base[UIOMUX_BLOCK_MAX];
 };
 
 struct uiomux {

@@ -68,6 +68,8 @@ init_shared_state (struct uiomux_state * state)
     /* Initialize mutex, regardless */
     mutex = &state->mutex[i].mutex;
     pthread_mutex_init (mutex, &attr);
+
+    state->mem_base[i] = 0;
   }
 
   pthread_mutexattr_destroy (&attr);

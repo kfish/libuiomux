@@ -65,7 +65,7 @@ uiomux_unlock_all (struct uiomux * uiomux)
  * valid, ie. whether or not it has already been freed. It does this by checking
  * the shared_state value, which is the first member of struct uiomux. We ensure
  * that this is valid by delaying the free() of uiomux until program exit, which
- * is why uiomux_free() below frees everything but the uiomux* itself.
+ * is why uiomux_delete() below frees everything but the uiomux* itself.
  *
  * This mechanism avoids the following error being reported by valgrind in the
  * common case where uiomux has* already been freed:
@@ -76,7 +76,7 @@ uiomux_unlock_all (struct uiomux * uiomux)
  * ==31337==    by 0x8048699: main (uiomux.c:108)
  * ==31337==  Address 0x41AB028 is 0 bytes inside a block of size 196 free'd
  * ==31337==    at 0x402237F: free (vg_replace_malloc.c:233)
- * ==31337==    by 0x403C7E0: uiomux_free (uiomux.c:111)
+ * ==31337==    by 0x403C7E0: uiomux_delete (uiomux.c:111)
  * ==31337==    by 0x403C8E1: uiomux_close (uiomux.c:122)
  * ==31337==    by 0x804868D: main (uiomux.c:65)
  */
@@ -141,7 +141,7 @@ uiomux_open (void)
 }
 
 static void
-uiomux_free (struct uiomux * uiomux)
+uiomux_delete (struct uiomux * uiomux)
 {
   struct uiomux_block * block;
   int i;
@@ -167,7 +167,7 @@ uiomux_close (struct uiomux * uiomux)
   uiomux_unlock_all (uiomux);
   unmap_shared_state (uiomux->shared_state);
 
-  uiomux_free (uiomux);
+  uiomux_delete (uiomux);
 
   return 0;
 }
@@ -191,7 +191,7 @@ uiomux_system_destroy (struct uiomux * uiomux)
 {
   destroy_shared_state (uiomux->shared_state);
 
-  uiomux_free (uiomux);
+  uiomux_delete (uiomux);
 
   return 0;
 }
@@ -240,7 +240,6 @@ uiomux_unlock (struct uiomux * uiomux, uiomux_resource_t blockmask)
   unsigned long *reg_base;
   int i, k;
 
-
   for (i=UIOMUX_BLOCK_MAX-1; i >= 0; i--) {
     if (blockmask & (1<<i)) {
       /* store registers */
@@ -265,6 +264,153 @@ uiomux_unlock (struct uiomux * uiomux, uiomux_resource_t blockmask)
   }
 
   return 0;
+}
+
+#define MULTI_BIT(x) (((long)x)&(((long)x)-1))
+
+static int
+uiomux_get_block_index (struct uiomux * uiomux, uiomux_resource_t blockmask)
+{
+  struct uiomux_block * block;
+  int i;
+
+  /* Invalid if multiple bits are set */
+  if (MULTI_BIT(blockmask)) {
+#ifdef DEBUG
+    fprintf (stderr, "%s: Multiple blocks specified\n", __func__);
+#endif
+    return -1;
+  }
+
+  for (i=0; i < UIOMUX_BLOCK_MAX; i++) {
+    if (blockmask & (1<<i)) {
+      return i;
+    }
+  }
+
+  return -1;
+}
+
+long
+uiomux_sleep (struct uiomux * uiomux, uiomux_resource_t blockmask)
+{
+  struct uiomux_block * block;
+  long ret;
+  int i;
+
+  /* Invalid if multiple bits are set, or block not found */
+  if ((i = uiomux_get_block_index (uiomux, blockmask)) == -1)
+    return NULL;
+
+  block = &uiomux->blocks[i];
+
+  if (block->uio) {
+#ifdef DEBUG
+    fprintf (stderr, "%s: Waiting for block %d\n", __func__, i);
+#endif
+    ret = uio_sleep (block->uio);
+  }
+
+  return ret;
+}
+
+void *
+uiomux_malloc (struct uiomux * uiomux, uiomux_resource_t blockmask,
+               size_t size, int align)
+{
+  pthread_mutex_t * mutex;
+  struct uiomux_block * block;
+  void * ret = NULL;
+  int i;
+
+  /* Invalid if multiple bits are set, or block not found */
+  if ((i = uiomux_get_block_index (uiomux, blockmask)) == -1)
+    return NULL;
+
+  block = &uiomux->blocks[i];
+
+  if (block->uio) {
+#ifdef DEBUG
+    fprintf (stderr, "%s: Allocating %ld bytes for block %d\n", __func__, size, i);
+#endif
+    mutex = &uiomux->shared_state->mutex[i].mutex;
+    pthread_mutex_lock (mutex);
+
+    ret = uio_malloc (block->uio,
+                      &uiomux->shared_state->mem_base[i],
+                      size, align);
+
+    pthread_mutex_unlock (mutex);
+  }
+
+  return ret;
+}
+
+void
+uiomux_free (struct uiomux * uiomux, uiomux_resource_t blockmask,
+             void * address, size_t size)
+{
+  pthread_mutex_t * mutex;
+  struct uiomux_block * block;
+  int i;
+
+  /* Invalid if multiple bits are set, or block not found */
+  if ((i = uiomux_get_block_index (uiomux, blockmask)) == -1)
+    return;
+
+  block = &uiomux->blocks[i];
+
+  if (block->uio) {
+#ifdef DEBUG
+    fprintf (stderr, "%s: Freeing memory for block %d\n", __func__, i);
+#endif
+    mutex = &uiomux->shared_state->mutex[i].mutex;
+    pthread_mutex_lock (mutex);
+
+    uio_free (block->uio, size);
+
+    pthread_mutex_unlock (mutex);
+  }
+}
+
+unsigned long
+uiomux_get_mmio (struct uiomux * uiomux, uiomux_resource_t blockmask,
+                 unsigned long * address, unsigned long * size, void ** iomem)
+{
+  struct uiomux_block * block;
+  int i;
+
+  /* Invalid if multiple bits are set, or block not found */
+  if ((i = uiomux_get_block_index (uiomux, blockmask)) == -1)
+    return 0;
+
+  block = &uiomux->blocks[i];
+
+  if (address) *address = block->uio->mmio.address;
+  if (size) *size = block->uio->mmio.size;
+  if (iomem) *iomem = block->uio->mmio.iomem;
+
+  return block->uio->mmio.address;
+}
+
+unsigned long
+uiomux_get_mem (struct uiomux * uiomux, uiomux_resource_t blockmask,
+                unsigned long * address, unsigned long * size, void ** iomem)
+{
+  struct uiomux_block * block;
+  int i;
+
+  /* Invalid if multiple bits are set, or block not found */
+  if ((i = uiomux_get_block_index (uiomux, blockmask)) == -1)
+    return 0;
+
+  block = &uiomux->blocks[i];
+
+  if (address) *address = block->uio->mem.address;
+  if (size) *size = block->uio->mem.size;
+  if (iomem) *iomem = block->uio->mem.iomem;
+
+  return block->uio->mem.address;
 }
 
 const char *

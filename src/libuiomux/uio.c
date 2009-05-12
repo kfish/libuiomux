@@ -162,3 +162,71 @@ uio_open (const char * name)
 
   return uio;
 }
+
+long
+uio_sleep (struct uio * uio)
+{
+        int fd;
+
+        fd = uio->dev.fd;
+
+	/* Enable interrupt in UIO driver */
+	{
+		unsigned long enable = 1;
+
+		write(fd, &enable, sizeof(u_long));
+	}
+
+	/* Wait for an interrupt */
+	{
+		unsigned long n_pending;
+
+		read(fd, &n_pending, sizeof(u_long));
+	}
+
+	//m4iph_vpu4_int_handler();
+
+	//avcbd_idr_adjust( global_context );
+	return 0;
+}
+
+void *
+uio_malloc (struct uio * uio, unsigned long * mem_base_p,
+            size_t size, int align)
+{
+  unsigned long mem_base = (unsigned long)*mem_base_p;
+  unsigned long mem_end;
+  unsigned long ret;
+  int alloc_size;
+
+  if (uio->mem.address == NULL) {
+    fprintf (stderr, "%s: Allocation failed: uio->mem.address NULL\n", __func__);
+    return NULL;
+  }
+
+  if (mem_base == 0) {
+    mem_base = (long)uio->mem.address;
+  }
+
+  mem_end = (unsigned long)uio->mem.address + uio->mem.size;
+
+  ret = ((mem_base + (align - 1)) & ~(align - 1));
+  alloc_size = ret - mem_base + size;
+
+  if (mem_base + alloc_size >= mem_end) {
+    fprintf(stderr, "%s: Allocation of size %d failed\n", __FUNCTION__, size);
+    printf("mem_base = %08lx, mem_end = %08lx\n", mem_base, mem_end);
+    return NULL;
+  }
+
+  *mem_base_p = mem_base + alloc_size;
+
+  return (void *)ret;
+}
+
+void
+uio_free (struct uio * uio, size_t size)
+{
+  fprintf (stderr, "%s: N/A\n", __func__);
+}
+
