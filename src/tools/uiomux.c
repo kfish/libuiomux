@@ -78,7 +78,9 @@ info (void)
 {
   struct uiomux * uiomux;
 
-  uiomux = uiomux_open ();
+  if ((uiomux = uiomux_open ()) == NULL)
+    return;
+
   uiomux_info (uiomux);
   uiomux_close (uiomux);
 }
@@ -88,7 +90,9 @@ reset (void)
 {
   struct uiomux * uiomux;
 
-  uiomux = uiomux_open ();
+  if ((uiomux = uiomux_open ()) == NULL)
+    return;
+
   printf ("Resetting UIOMux system ...\n");
   uiomux_system_reset (uiomux);
   uiomux_close (uiomux);
@@ -99,7 +103,9 @@ destroy (void)
 {
   struct uiomux * uiomux;
 
-  uiomux = uiomux_open ();
+  if ((uiomux = uiomux_open ()) == NULL)
+    return;
+
   printf ("Destroying UIOMux system ...\n");
   uiomux_system_destroy (uiomux);
   exit (0);
