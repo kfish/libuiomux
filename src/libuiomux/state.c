@@ -49,6 +49,55 @@
 #define debug_info(s)
 #endif
 
+/*
+ * \returns The total size in bytes of the owners table.
+ */
+static size_t
+init_owners_table (struct uiomux_state * state)
+{
+  struct uio * uio;
+  const char * name = NULL;
+  int i;
+  size_t nr_pages = 0, n;
+  long pagesize;
+  char * o = NULL;
+  pid_t * owners;
+
+  pagesize = sysconf (_SC_PAGESIZE);
+
+  if (state != NULL) {
+    o = (char *)state + sizeof (struct uiomux_state);
+    owners = (pid_t *)o;
+  }
+
+  for (i = 0; i < UIOMUX_BLOCK_MAX; i++) {
+    if ((name = uiomux_name (1<<i)) != NULL) {
+      if ((uio = uio_open (name)) != NULL) {
+        n = uio->mem.size / pagesize;
+
+        if (state != NULL) {
+#ifdef DEBUG
+          fprintf (stderr, "%s: Initializing %ld pages for block %d ...\n", __func__, n, i);
+#endif
+          state->owners[i] = owners;
+          owners += nr_pages;
+#ifdef DEBUG
+        } else {
+          fprintf (stderr, "%s: Counting %ld pages for block %d ...\n", __func__, n, i);
+#endif
+        }
+        nr_pages += n;
+
+        uio_close (uio);
+      }
+    } else if (state != NULL) {
+      state->owners[i] = NULL;
+    }
+  }
+
+  return nr_pages * sizeof(pid_t);
+}
+
 int
 init_shared_state (struct uiomux_state * state)
 {
@@ -58,7 +107,6 @@ init_shared_state (struct uiomux_state * state)
   struct uio * uio;
   int i;
 
-  state->version = UIOMUX_STATE_VERSION;
   state->num_blocks = UIOMUX_BLOCK_MAX;
 
   pthread_mutexattr_init (&attr);
@@ -74,6 +122,8 @@ init_shared_state (struct uiomux_state * state)
 
   pthread_mutexattr_destroy (&attr);
 
+  init_owners_table (state);
+
   return 0;
 }
 
@@ -84,7 +134,7 @@ create_shared_state (void)
   int shm_descr;
   size_t size;
 
-  size = sizeof(struct uiomux_state);
+  size = sizeof(struct uiomux_state) + init_owners_table(NULL);
 
   shm_descr = shm_open (UIOMUX_SHM_NAME, O_CREAT | O_EXCL | O_RDWR, S_IRWXU);
   if (shm_descr == -1) {
@@ -106,6 +156,8 @@ create_shared_state (void)
   close (shm_descr);
 
   state->proper_address = (void *)state;
+  state->version = UIOMUX_STATE_VERSION;
+  state->size = size;
   
   return state;
 }
@@ -120,7 +172,7 @@ map_shared_state (void)
 
   debug_info ("map_shared_state: IN");
 
-  size = sizeof(struct uiomux_state);
+  size = sizeof(struct uiomux_state) + init_owners_table(NULL);
 
   shm_descr = shm_open (UIOMUX_SHM_NAME, O_RDWR, S_IRWXU);
   if (shm_descr == -1) {
@@ -169,10 +221,14 @@ map_shared_state (void)
 int
 unmap_shared_state (struct uiomux_state * state)
 {
+  size_t size;
+
   if (state == NULL) return -1;
   if (state != state->proper_address) return -2;
 
-  return munmap ((void *)state, sizeof (struct uiomux_state));
+  size = state->size;
+
+  return munmap ((void *)state, size);
 }
 
 int
@@ -180,6 +236,7 @@ destroy_shared_state (struct uiomux_state * state)
 {
   pthread_mutex_t * mutex;
   int i, ret;
+  size_t size;
 
   if (state == NULL) return -1;
   if (state->proper_address != state) return -1;
@@ -195,7 +252,12 @@ destroy_shared_state (struct uiomux_state * state)
     }
   }
 
-  munmap ((void *)state, sizeof (struct uiomux_state));
+  if (state->version == 1) {
+    size = sizeof (struct uiomux_state);
+  } else {
+    size = state->size;
+  }
+  munmap ((void *)state, size);
 
   if (shm_unlink (UIOMUX_SHM_NAME) < 0) {
     debug_perror ("shm_unlink");

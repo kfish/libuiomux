@@ -34,7 +34,7 @@
 
 #define UIOMUX_BLOCK_MAX 16
 
-#define UIOMUX_STATE_VERSION 1
+#define UIOMUX_STATE_VERSION 2
 
 /***********************************************************
  * Library-private Types
@@ -58,6 +58,9 @@ struct uiomux_state {
   /* Version of this state */
   int version;
 
+  /* Size of this state */
+  size_t size;
+
   /* Number of blocks allocated and initialized */
   int num_blocks;
 
@@ -66,6 +69,9 @@ struct uiomux_state {
 
   /* Memory management */
   unsigned char * mem_base[UIOMUX_BLOCK_MAX];
+
+  /* Pointers to page owners, which is stored immediately after shared state */
+  pid_t * owners[UIOMUX_BLOCK_MAX];
 };
 
 struct uiomux {

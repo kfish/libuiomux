@@ -180,6 +180,11 @@ uiomux_system_reset (struct uiomux * uiomux)
   if (uiomux->shared_state == NULL) {
     uiomux->shared_state = get_shared_state ();
   }
+
+  if (uiomux->shared_state == NULL) {
+    fprintf (stderr, "Incorrect version, cannot reset.\n");
+    return -1;
+  }
     
   init_shared_state (uiomux->shared_state);
 

@@ -33,6 +33,8 @@
 
 #include "uio.h"
 
+/* #define DEBUG */
+
 static int fgets_with_openclose(char *fname, char *buf, size_t maxlen) {
 	FILE *fp;
 
