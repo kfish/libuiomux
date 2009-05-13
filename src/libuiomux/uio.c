@@ -100,7 +100,7 @@ static int setup_uio_map(struct uio_device *udp, int nr, struct uio_map *ump)
 
 	ump->iomem = mmap(0, ump->size,
 			  PROT_READ|PROT_WRITE, MAP_SHARED,
-			  udp->fd, nr * getpagesize());
+			  udp->fd, nr * sysconf (_SC_PAGESIZE));
 
 	if (ump->iomem == MAP_FAILED)
 		return -1;
@@ -192,43 +192,98 @@ uio_sleep (struct uio * uio)
 	return 0;
 }
 
-void *
-uio_malloc (struct uio * uio, unsigned long * mem_base_p,
-            size_t size, int align)
+/* Returns index */
+static int
+uio_mem_find (pid_t * owners, int max, int count)
 {
-  unsigned long mem_base = (unsigned long)*mem_base_p;
-  unsigned long mem_end;
-  unsigned long ret;
-  int alloc_size;
+  int i, c, base = -1;
 
-  if (uio->mem.address == NULL) {
+  for (i = 0; i < max; i++) {
+    if (base == -1) { /* No start yet */
+      if (owners[i] == 0) {
+        base = i;
+        c = 1;
+      }
+    } else { /* Got a base */
+      if (owners[i] == 0) {
+        c++;
+        if (c == count) {
+          fprintf (stderr, "%s: Found %d available pages at index %d\n", __func__, c, base);
+          return base;
+        }
+      } else {
+        base = -1;
+        c = 0;
+      }
+    }
+  }
+
+  return -1;
+}
+
+static int
+uio_mem_alloc_to (pid_t * owners, int offset, int count, pid_t pid)
+{
+  pid_t * p = &owners[offset];
+  int i;
+
+  for (i = 0; i < count; i++)
+    *p++ = pid;
+
+  return 0;
+}
+
+static int
+uio_mem_alloc (pid_t * owners, int offset, int count)
+{
+  return uio_mem_alloc_to (owners, offset, count, getpid());
+}
+
+static int
+uio_mem_free (pid_t * owners, int offset, int count)
+{
+  return uio_mem_alloc_to (owners, offset, count, 0);
+}
+
+void *
+uio_malloc (struct uio * uio, pid_t * owners, size_t size, int align)
+{
+  unsigned long mem_base;
+  int pagesize, pages_req, pages_max;
+  int base;
+
+  if (uio->mem.address == 0) {
     fprintf (stderr, "%s: Allocation failed: uio->mem.address NULL\n", __func__);
     return NULL;
   }
 
-  if (mem_base == 0) {
-    mem_base = (long)uio->mem.address;
-  }
+  pagesize = sysconf (_SC_PAGESIZE);
 
-  mem_end = (unsigned long)uio->mem.address + uio->mem.size;
+  pages_max = uio->mem.size / pagesize;
+  pages_req = (size / pagesize) + 1;
 
-  ret = ((mem_base + (align - 1)) & ~(align - 1));
-  alloc_size = ret - mem_base + size;
-
-  if (mem_base + alloc_size >= mem_end) {
-    fprintf(stderr, "%s: Allocation of size %d failed\n", __FUNCTION__, size);
-    printf("mem_base = %08lx, mem_end = %08lx\n", mem_base, mem_end);
+  if ((base = uio_mem_find (owners, pages_max, pages_req)) == -1)
     return NULL;
-  }
 
-  *mem_base_p = mem_base + alloc_size;
+  uio_mem_alloc (owners, base, pages_req);
+  mem_base = uio->mem.address + (base*pagesize);
 
-  return (void *)ret;
+  return (void *)mem_base;
 }
 
 void
-uio_free (struct uio * uio, size_t size)
+uio_free (struct uio * uio, pid_t * owners, void * address, size_t size)
 {
-  fprintf (stderr, "%s: N/A\n", __func__);
+  int pagesize, base, pages_req;
+
+#ifdef DEBUG
+  fprintf (stderr, "%s: IN\n", __func__);
+#endif
+
+  pagesize = sysconf (_SC_PAGESIZE);
+
+  base = ((long)address - uio->mem.address) / pagesize;
+  pages_req = (size / pagesize) + 1;
+  uio_mem_free (owners, base, pages_req);
 }
 

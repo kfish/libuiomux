@@ -34,7 +34,7 @@
 
 #define UIOMUX_BLOCK_MAX 16
 
-#define UIOMUX_STATE_VERSION 2
+#define UIOMUX_STATE_VERSION 3
 
 /***********************************************************
  * Library-private Types
@@ -66,9 +66,6 @@ struct uiomux_state {
 
   /* Mutexes */
   struct uiomux_mutex mutex[UIOMUX_BLOCK_MAX];
-
-  /* Memory management */
-  unsigned char * mem_base[UIOMUX_BLOCK_MAX];
 
   /* Pointers to page owners, which is stored immediately after shared state */
   pid_t * owners[UIOMUX_BLOCK_MAX];

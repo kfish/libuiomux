@@ -48,10 +48,9 @@ long
 uio_sleep (struct uio * uio);
 
 void *
-uio_malloc (struct uio * uio, unsigned long * mem_base_p,
-            size_t size, int align);
+uio_malloc (struct uio * uio, pid_t * owners, size_t size, int align);
 
 void
-uio_free (struct uio * uio, size_t size);
+uio_free (struct uio * uio, pid_t * owners, void * address, size_t size);
 
 #endif /* __UIOMUX_UIO_H__ */

@@ -53,6 +53,27 @@ uiomux_unlock_all (struct uiomux * uiomux)
   return 0;
 }
 
+static int
+uiomux_free_mem (struct uiomux * uiomux)
+{
+  int i, j, owners_len;
+  char * o;
+  pid_t * p, mypid;
+
+  mypid = getpid();
+
+  owners_len = (uiomux->shared_state->size - sizeof (struct uiomux_state)) / sizeof (pid_t);
+  o = (char *)uiomux->shared_state + sizeof (struct uiomux_state);
+  p = (pid_t *)o;
+
+  for (i=0; i < owners_len; i++) {
+    if (*p == mypid)
+      *p = 0;
+  }
+
+  return 0;
+}
+
 /**
  * uiomux_on_exit()
  *
@@ -164,6 +185,11 @@ uiomux_close (struct uiomux * uiomux)
 {
   if (uiomux == NULL) return -1;
 
+#ifdef DEBUG
+  fprintf (stderr, "%s: IN\n", __func__);
+#endif
+
+  uiomux_free_mem (uiomux);
   uiomux_unlock_all (uiomux);
   unmap_shared_state (uiomux->shared_state);
 
@@ -342,7 +368,7 @@ uiomux_malloc (struct uiomux * uiomux, uiomux_resource_t blockmask,
     pthread_mutex_lock (mutex);
 
     ret = uio_malloc (block->uio,
-                      &uiomux->shared_state->mem_base[i],
+                      uiomux->shared_state->owners[i],
                       size, align);
 
     pthread_mutex_unlock (mutex);
@@ -372,7 +398,7 @@ uiomux_free (struct uiomux * uiomux, uiomux_resource_t blockmask,
     mutex = &uiomux->shared_state->mutex[i].mutex;
     pthread_mutex_lock (mutex);
 
-    uio_free (block->uio, size);
+    uio_free (block->uio, uiomux->shared_state->owners[i], address, size);
 
     pthread_mutex_unlock (mutex);
   }
