@@ -53,6 +53,88 @@ uiomux_unlock_all (struct uiomux * uiomux)
   return 0;
 }
 
+/*
+ * Deallocate all memory.
+ */
+static int
+uiomux_reset_mem (struct uiomux * uiomux)
+{
+  int i, j, owners_len;
+  char * o;
+
+  owners_len = (uiomux->shared_state->size - sizeof (struct uiomux_state)) / sizeof (pid_t);
+  o = (char *)uiomux->shared_state + sizeof (struct uiomux_state);
+
+  memset (o, 0, owners_len);
+
+  return 0;
+}
+
+/*
+ * Deallocate memory which is allocated to dead processes.
+ */
+static int
+uiomux_update_mem (struct uiomux * uiomux)
+{
+  int i, j, owners_len;
+  char * o;
+  pid_t * p, known_bad[8], known_good[8];
+  int kb=0, kg=0; /* indices into known_ tables */
+  char fname[256];
+  int ret;
+  struct stat statbuf;
+
+  memset (known_bad, 0, sizeof(known_bad));
+  memset (known_good, 0, sizeof(known_good));
+
+  owners_len = (uiomux->shared_state->size - sizeof (struct uiomux_state)) / sizeof (pid_t);
+  o = (char *)uiomux->shared_state + sizeof (struct uiomux_state);
+  p = (pid_t *)o;
+
+  for (i=0; i < owners_len; i++) {
+    if (*p != 0) {
+      /* Check cached good values */
+      for (j=0; j<kg; j++) {
+        if (*p == known_good[j]) {
+          goto update_next;
+        }
+      }
+      /* Check cached bad values */
+      for (j=0; j<kb; j++) {
+        if (*p == known_bad[j]) {
+          *p = 0;
+          goto update_next;
+        } 
+      }
+
+      /* Check against /proc/pid */
+      snprintf (fname, 256, "/proc/%d", *p);
+      if (stat (fname, &statbuf) == 0) {
+        /* /proc/pid good */
+        if (kg < 8) {
+          known_good[kg] = *p;
+          kg++;
+        }
+      } else {
+        /* /proc/pid bad */
+        if (kb < 8) {
+          known_bad[kb] = *p;
+          kb++;
+        }
+        *p = 0;
+      }
+    }
+
+update_next:
+    p++;
+  }
+
+  return 0;
+}
+
+/*
+ * Deallocate memory allocated to current process.
+ */
 static int
 uiomux_free_mem (struct uiomux * uiomux)
 {
@@ -69,6 +151,7 @@ uiomux_free_mem (struct uiomux * uiomux)
   for (i=0; i < owners_len; i++) {
     if (*p == mypid)
       *p = 0;
+    p++;
   }
 
   return 0;
@@ -157,6 +240,9 @@ uiomux_open (void)
 
   /* Register on_exit() cleanup function */
   on_exit (uiomux_on_exit, uiomux);
+
+  /* Update memory allocs */
+  uiomux_update_mem (uiomux);
   
   return uiomux;
 }
@@ -213,6 +299,7 @@ uiomux_system_reset (struct uiomux * uiomux)
   }
     
   init_shared_state (uiomux->shared_state);
+  uiomux_reset_mem (uiomux);
 
   return 0;
 }
