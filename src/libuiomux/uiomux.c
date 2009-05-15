@@ -495,14 +495,17 @@ uiomux_info (struct uiomux * uiomux)
   struct uiomux_state * state;
   struct uiomux_block * block;
   int i;
+  long pagesize;
+
+  pagesize = sysconf (_SC_PAGESIZE);
 
   for (i = 0; i < UIOMUX_BLOCK_MAX; i++) {
     block = &uiomux->blocks[i];
     if (block->uio != NULL) {
       printf ("%s: %s", block->uio->dev.path, block->uio->dev.name);
-      printf ("\tmmio\t%8lx\t%-lx bytes\n\tmem\t%8lx\t%-lx bytes\n",
-              block->uio->mmio.address, block->uio->mmio.size,
-              block->uio->mem.address, block->uio->mem.size);
+      printf ("\tmmio\t0x%8lx\t0x%8lx bytes (%ld pages)\n\tmem\t0x%8lx\t0x%8lx bytes (%ld pages)\n",
+              block->uio->mmio.address, block->uio->mmio.size, block->uio->mmio.size/pagesize,
+              block->uio->mem.address, block->uio->mem.size, block->uio->mem.size/pagesize);
     }
   }
 
