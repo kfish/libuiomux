@@ -511,3 +511,25 @@ uiomux_info (struct uiomux * uiomux)
 
   return 0;
 }
+
+int
+uiomux_meminfo (struct uiomux * uiomux)
+{
+  uiomux_resource_t blocks = UIOMUX_NONE;
+  struct uiomux_state * state;
+  struct uiomux_block * block;
+  int i;
+  long pagesize;
+
+  pagesize = sysconf (_SC_PAGESIZE);
+
+  for (i = 0; i < UIOMUX_BLOCK_MAX; i++) {
+    block = &uiomux->blocks[i];
+    if (block->uio != NULL) {
+      printf ("%s: %s", block->uio->dev.path, block->uio->dev.name);
+      uio_meminfo (block->uio, uiomux->shared_state->owners[i]);
+    }
+  }
+
+  return 0;
+}

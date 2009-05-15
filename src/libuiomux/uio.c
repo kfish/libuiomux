@@ -287,3 +287,52 @@ uio_free (struct uio * uio, pid_t * owners, void * address, size_t size)
   uio_mem_free (owners, base, pages_req);
 }
 
+static void
+print_usage (int pid, long base, long top)
+{
+  char fname[MAXNAMELEN], cmdline[MAXNAMELEN];
+
+  printf ("0x%08lx-0x%08lx : ", base, top);
+
+  if (pid == 0) {
+    printf ("----\n");
+  } else {
+    sprintf(fname, "/proc/%d/cmdline", pid);
+    if (fgets_with_openclose(fname, cmdline, MAXNAMELEN) < 0) {
+      printf ("%d\n", pid);
+    } else {
+      printf ("%d %s\n", pid, cmdline);
+    }
+  }
+}
+
+
+void
+uio_meminfo (struct uio * uio, pid_t * owners)
+{
+  int i, pagesize, pages;
+  long addr, base, top;
+  pid_t pid=0, new_pid;
+
+  pagesize = sysconf (_SC_PAGESIZE);
+  pages = (uio->mem.size / pagesize) + 1;
+
+  base = addr = uio->mem.address;
+  top = addr + pagesize-1;
+  for (i=0; i < pages; i++) {
+    new_pid = *owners++;
+    if (new_pid == pid) {
+      top += pagesize;
+    } else {
+      if (i>0) {
+        /* Prev seg. ended */
+        print_usage (pid, base, top);
+      }
+      base = addr;
+      top = addr + pagesize-1;
+      pid = new_pid;
+    }
+    addr += pagesize;
+  }
+  print_usage (pid, base, top);
+}

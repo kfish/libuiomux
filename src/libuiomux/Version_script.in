@@ -16,6 +16,7 @@
 		uiomux_query;
 		uiomux_name;
 		uiomux_info;
+		uiomux_meminfo;
 		uiomux_get_mmio;
 		uiomux_get_mem;
 		uiomux_malloc;

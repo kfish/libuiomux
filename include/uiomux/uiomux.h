@@ -176,6 +176,14 @@ int
 uiomux_info (UIOMux * uiomux);
 
 /**
+ * Print info about UIO memory allocations to stdout
+ * \param uiomux A UIOMux handle
+ * \retval 0 Success
+ */
+int
+uiomux_meminfo (UIOMux * uiomux);
+
+/**
  * Create a new UIOMux object,
  * 
  * \retval NULL on system error; check errno for details.

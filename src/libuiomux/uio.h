@@ -53,4 +53,7 @@ uio_malloc (struct uio * uio, pid_t * owners, size_t size, int align);
 void
 uio_free (struct uio * uio, pid_t * owners, void * address, size_t size);
 
+void
+uio_meminfo (struct uio * uio, pid_t * owners);
+
 #endif /* __UIOMUX_UIO_H__ */

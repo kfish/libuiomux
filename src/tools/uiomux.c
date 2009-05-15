@@ -48,6 +48,7 @@ usage (void)
   printf ("\nReporting:\n");
   printf ("  query       List available UIO device names that can be managed by UIOMux.\n");
   printf ("  info        Show memory layout of each UIO device managed by UIOMux.\n");
+  printf ("  meminfo     Show memory allocations of each UIO device managed by UIOMux.\n");
 
   printf ("\nManagement:\n");
   printf ("  reset       Reset the UIOMux system. This initializes the UIOMux shared state,\n");
@@ -82,6 +83,18 @@ info (void)
     return;
 
   uiomux_info (uiomux);
+  uiomux_close (uiomux);
+}
+
+static void
+meminfo (void)
+{
+  struct uiomux * uiomux;
+
+  if ((uiomux = uiomux_open ()) == NULL)
+    return;
+
+  uiomux_meminfo (uiomux);
   uiomux_close (uiomux);
 }
 
@@ -123,6 +136,8 @@ main (int argc, char *argv[])
     query ();
   } else if (!strncmp (argv[1], "info", 5)) {
     info ();
+  } else if (!strncmp (argv[1], "meminfo", 8)) {
+    meminfo ();
   } else if (!strncmp (argv[1], "reset", 6)) {
     reset ();
   } else if (!strncmp (argv[1], "destroy", 8)) {
