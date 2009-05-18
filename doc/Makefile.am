@@ -1,6 +1,6 @@
 docdir=$(prefix)/share/doc/@PACKAGE@
 
-man_MANS =
+man_MANS = uiomux.1
 
 EXTRA_DIST = $(man_MANS) Doxyfile.in
 

@@ -1,0 +1,49 @@
+.de Sh \" Subsection heading
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+
+.TH UIOMUX 1 "May 2009" "UIOMux" "UIOMux Programmer's Manual"
+.SH NAME
+uiomux \- query and manage the UIOMux state
+
+.SH SYNOPSIS
+
+.B uiomux
+.RI SUBCOMMAND
+
+.SH DESCRIPTION
+.B uiomux
+is a tool for querying UIO and managing the UIOMux state.
+
+UIOMux is a conflict manager for system resources, including UIO devices.
+
+.SH SUBCOMMANDS
+
+.Sh Reporting
+.IP info
+Show memory layout of each UIO device managed by UIOMux.
+.IP query
+List available UIO device names that can be managed by UIOMux.
+.IP meminfo
+Show memory allocations of each UIO device managed by UIOMux.
+
+.Sh "Management"
+.IP reset
+Reset the UIOMux system. This initializes the UIOMux shared state,
+including all shared mutexes, and scans UIO memory maps.
+.IP destroy
+Destroy the UIOMux system. This frees all resources used by the
+UIOMux shared state. Note that any subsequent program using UIOMux
+will reallocate and initialize this shared state, including this
+tool's 'info' and 'reset' commands.
+
+.SH AUTHORS
+
+uiomux was written by Conrad Parker.
+
+Please report bugs to <conrad@metadecks.org>
