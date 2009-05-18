@@ -40,10 +40,10 @@ used to manage contention across multiple simultaneous processes and threads.
 
 UIOMux allows simultaneous locking of access to multiple resources, with
 deterministic locking and unlocking order to avoid circular waiting.
-Processes or threads requring simultaneous access to more than one resource
+Processes or threads requiring simultaneous access to more than one resource
 should lock and unlock them simultaneously via libuiomux.
 
-UIOMux will save and restore of memory-mapped IO registers associated with a
+UIOMux will save and restore memory-mapped IO registers associated with a
 UIO device. Registers are saved on uiomux_unlock() and restored on
 uiomux_lock(), if intervening users have used the device.
 
