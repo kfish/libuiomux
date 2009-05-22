@@ -35,6 +35,8 @@
 
 /* #define DEBUG */
 
+/* #define SAVE_RESTORE_REGISTERS */
+
 static int
 uiomux_unlock_all (struct uiomux * uiomux)
 {
@@ -320,17 +322,25 @@ uiomux_lock (struct uiomux * uiomux, uiomux_resource_t blockmask)
   pthread_mutex_t * mutex;
   struct uiomux_block * block;
   unsigned long *reg_base;
-  int i, k;
+  int i, k, ret;
 
   for (i=0; i < UIOMUX_BLOCK_MAX; i++) {
     if (blockmask & (1<<i)) {
       /* lock mutex */
 #ifdef DEBUG
-      fprintf (stderr, "%s: Locking block %d\n", __func__, i);
+      fprintf (stderr, "%s: PID %d locking block %d\n", __func__, getpid(), i);
 #endif
       mutex = &uiomux->shared_state->mutex[i].mutex;
-      pthread_mutex_lock (mutex);
+      ret = pthread_mutex_lock (mutex);
+      if (ret != 0)
+        fprintf (stderr, "%s: FAILED Locking block %d\n", __func__, i);
+#ifdef DEBUG
+      else
+        fprintf (stderr, "%s: PID %d LOCKED block %d\n", __func__, getpid(), i);
+#endif
+      
 
+#ifdef SAVE_RESTORE_REGISTERS
       /* restore registers */
       if (!pthread_equal (uiomux->shared_state->mutex[i].prev_holder,
                           pthread_self())) {
@@ -342,6 +352,7 @@ uiomux_lock (struct uiomux * uiomux, uiomux_resource_t blockmask)
           }
         }
       }
+#endif
 
     }
   }
@@ -356,10 +367,11 @@ uiomux_unlock (struct uiomux * uiomux, uiomux_resource_t blockmask)
   pthread_mutex_t * mutex;
   struct uiomux_block * block;
   unsigned long *reg_base;
-  int i, k;
+  int i, k, ret;
 
   for (i=UIOMUX_BLOCK_MAX-1; i >= 0; i--) {
     if (blockmask & (1<<i)) {
+#ifdef SAVE_RESTORE_REGISTERS
       /* store registers */
       block = &uiomux->blocks[i];
       if (block->uio) {
@@ -368,16 +380,23 @@ uiomux_unlock (struct uiomux * uiomux, uiomux_resource_t blockmask)
           block->registers[k] = reg_base[k];
         }
       }
+#endif
 
       /* record last holder */
       uiomux->shared_state->mutex[i].prev_holder = pthread_self();
 
       /* unlock mutex */
 #ifdef DEBUG
-      fprintf (stderr, "%s: Unlocking block %d\n", __func__, i);
+      fprintf (stderr, "%s: PID %d unlocking block %d\n", __func__, getpid(), i);
 #endif
       mutex = &uiomux->shared_state->mutex[i].mutex;
-      pthread_mutex_unlock (mutex);
+      ret = pthread_mutex_unlock (mutex);
+      if (ret != 0)
+        fprintf (stderr, "%s: FAILED Unlocking block %d\n", __func__, i);
+#ifdef DEBUG
+      else
+        fprintf (stderr, "%s: PID %d UNLOCKED block %d\n", __func__, getpid(), i);
+#endif
     }
   }
 
