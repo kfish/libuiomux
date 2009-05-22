@@ -43,7 +43,14 @@ deterministic locking and unlocking order to avoid circular waiting.
 Processes or threads requiring simultaneous access to more than one resource
 should lock and unlock them simultaneously via libuiomux.
 
-UIOMux will save and restore memory-mapped IO registers associated with a
+UIO devices report activity through a read of their file descriptor. UIOMux
+provides a simplified interface for waiting for a UIO managed resource.
+
+UIOMux provides functions for allocating the UIO memory reserved by the
+kernel for each device. Allocations are tied to the calling process ID, and
+are cleared on process exit.
+
+UIOMux can save and restore memory-mapped IO registers associated with a
 UIO device. Registers are saved on uiomux_unlock() and restored on
 uiomux_lock(), if intervening users have used the device.
 
@@ -61,6 +68,7 @@ Commandline tool
     Reporting:
       query       List available UIO device names that can be managed by UIOMux.
       info        Show memory layout of each UIO device managed by UIOMux.
+      meminfo     Show memory allocations of each UIO device managed by UIOMux.
     
     Management:
       reset       Reset the UIOMux system. This initializes the UIOMux shared state,
@@ -69,6 +77,7 @@ Commandline tool
                   UIOMux shared state. Note that any subsequent program using UIOMux
                   will reallocate and initialize this shared state, including this
                   tool's 'info' and 'reset' commands.
+
 
 
 libuiomux API
@@ -135,6 +144,23 @@ Failure to unlock can lead to system-wide starvation of the locked resource.
 Note however that all locks obtained via libuiomux will be automatically
 unlocked on program termination to minimize the potential damage caused by
 rogue processes.
+
+UIO devices report activity through a read of their file descriptor. A
+simplified interface is offered for waiting for a UIO managed resource:
+
+    uiomux_sleep (uiomux, resource);
+
+UIOMux also provides a co-operative memory allocation scheme. To allocate
+memory from a UIO managed resource:
+
+    uiomux_malloc (uiomux, resource, size, alignment);
+
+To free allocated memory from a UIO managed resource:
+
+    uiomux_free (uiomux, resource, address, size);
+
+Note that any outstanding allocations are removed on process exit, and any
+invalid allocations are cleared on uiomux_open().
 
 Finally, each process or thread that opened a UIOMux* handle should
 close it by calling uiomux_close(). This will remove associated memory maps,
