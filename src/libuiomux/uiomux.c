@@ -568,7 +568,7 @@ uiomux_name(uiomux_resource_t block)
       return "VEU";
       break;
     case UIOMUX_SH_VPU:
-      return "VPU";
+      return "VPU5";
       break;
     default:
       return NULL;
