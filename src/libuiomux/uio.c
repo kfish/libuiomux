@@ -19,8 +19,8 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <math.h>  
-#include <stdio.h>  
+#include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
@@ -35,7 +35,8 @@
 
 /* #define DEBUG */
 
-static int fgets_with_openclose(char *fname, char *buf, size_t maxlen) {
+static int fgets_with_openclose(char *fname, char *buf, size_t maxlen)
+{
 	FILE *fp;
 
 	if ((fp = fopen(fname, "r")) != NULL) {
@@ -72,7 +73,7 @@ static int locate_uio_device(const char *name, struct uio_device *udp)
 	udp->path[strlen(udp->path) - 4] = '\0';
 
 	sprintf(buf, "/dev/uio%d", uio_id);
-	udp->fd = open(buf, O_RDWR|O_SYNC /*| O_NONBLOCK*/);
+	udp->fd = open(buf, O_RDWR | O_SYNC /*| O_NONBLOCK */ );
 
 	if (udp->fd < 0) {
 		perror("open");
@@ -82,10 +83,11 @@ static int locate_uio_device(const char *name, struct uio_device *udp)
 	return 0;
 }
 
-static int setup_uio_map(struct uio_device *udp, int nr, struct uio_map *ump)
+static int setup_uio_map(struct uio_device *udp, int nr,
+			 struct uio_map *ump)
 {
 	char fname[MAXNAMELEN], buf[MAXNAMELEN];
- 
+
 	sprintf(fname, "%s/maps/map%d/addr", udp->path, nr);
 	if (fgets_with_openclose(fname, buf, MAXNAMELEN) <= 0)
 		return -1;
@@ -99,8 +101,8 @@ static int setup_uio_map(struct uio_device *udp, int nr, struct uio_map *ump)
 	ump->size = strtoul(buf, NULL, 0);
 
 	ump->iomem = mmap(0, ump->size,
-			  PROT_READ|PROT_WRITE, MAP_SHARED,
-			  udp->fd, nr * sysconf (_SC_PAGESIZE));
+			  PROT_READ | PROT_WRITE, MAP_SHARED,
+			  udp->fd, nr * sysconf(_SC_PAGESIZE));
 
 	if (ump->iomem == MAP_FAILED)
 		return -1;
@@ -108,66 +110,68 @@ static int setup_uio_map(struct uio_device *udp, int nr, struct uio_map *ump)
 	return 0;
 }
 
-int
-uio_close (struct uio * uio)
+int uio_close(struct uio *uio)
 {
-  if (uio == NULL) return -1;
+	if (uio == NULL)
+		return -1;
 
-  if (uio->mem.iomem)
-    munmap (uio->mem.iomem, uio->mem.size);
+	if (uio->mem.iomem)
+		munmap(uio->mem.iomem, uio->mem.size);
 
-  if (uio->mmio.iomem)
-    munmap (uio->mmio.iomem, uio->mmio.size);
+	if (uio->mmio.iomem)
+		munmap(uio->mmio.iomem, uio->mmio.size);
 
-  if (uio->dev.fd > 0) close (uio->dev.fd);
-  if (uio->dev.path) free (uio->dev.path);
-  if (uio->dev.name) free (uio->dev.name);
+	if (uio->dev.fd > 0)
+		close(uio->dev.fd);
+	if (uio->dev.path)
+		free(uio->dev.path);
+	if (uio->dev.name)
+		free(uio->dev.name);
 
-  free (uio);
+	free(uio);
 
-  return 0;
+	return 0;
 }
 
-struct uio *
-uio_open (const char * name)
+struct uio *uio_open(const char *name)
 {
-  struct uio * uio;
-  int ret;
+	struct uio *uio;
+	int ret;
 
-  uio = (struct uio *) calloc (1, sizeof (struct uio));
-  if (uio == NULL) return NULL;
+	uio = (struct uio *) calloc(1, sizeof(struct uio));
+	if (uio == NULL)
+		return NULL;
 
-  ret = locate_uio_device(name, &uio->dev);
-  if (ret < 0) {
-    uio_close (uio);
-    return NULL;
-  }
-	
+	ret = locate_uio_device(name, &uio->dev);
+	if (ret < 0) {
+		uio_close(uio);
+		return NULL;
+	}
 #ifdef DEBUG
-  printf("uio_open: Found matching UIO device at %s\n", uio->dev.path);
+	printf("uio_open: Found matching UIO device at %s\n",
+	       uio->dev.path);
 #endif
 
-  ret = setup_uio_map(&uio->dev, 0, &uio->mmio);
-  if (ret < 0) {
-    uio_close (uio);
-    return NULL;
-  }
+	ret = setup_uio_map(&uio->dev, 0, &uio->mmio);
+	if (ret < 0) {
+		uio_close(uio);
+		return NULL;
+	}
 
-  ret = setup_uio_map(&uio->dev, 1, &uio->mem);
-  if (ret < 0) {
-    uio_close (uio);
-    return NULL;
-  }
+	ret = setup_uio_map(&uio->dev, 1, &uio->mem);
+	if (ret < 0) {
+		uio_close(uio);
+		return NULL;
+	}
 
-  return uio;
+	return uio;
 }
 
-long
-uio_sleep (struct uio * uio)
+long uio_sleep(struct uio *uio)
 {
-        int fd;
+	int fd;
 
-        fd = uio->dev.fd;
+	fd = uio->dev.fd;
 
 	/* Enable interrupt in UIO driver */
 	{
@@ -190,146 +194,143 @@ uio_sleep (struct uio * uio)
 }
 
 /* Returns index */
-static int
-uio_mem_find (pid_t * owners, int max, int count)
+static int uio_mem_find(pid_t * owners, int max, int count)
 {
-  int i, c, base = -1;
+	int i, c, base = -1;
 
-  for (i = 0; i < max; i++) {
-    if (base == -1) { /* No start yet */
-      if (owners[i] == 0) {
-        base = i;
-        c = 1;
-      }
-    } else { /* Got a base */
-      if (owners[i] == 0) {
-        c++;
-        if (c == count) {
-          fprintf (stderr, "%s: Found %d available pages at index %d\n", __func__, c, base);
-          return base;
-        }
-      } else {
-        base = -1;
-        c = 0;
-      }
-    }
-  }
+	for (i = 0; i < max; i++) {
+		if (base == -1) {	/* No start yet */
+			if (owners[i] == 0) {
+				base = i;
+				c = 1;
+			}
+		} else {	/* Got a base */
+			if (owners[i] == 0) {
+				c++;
+				if (c == count) {
+					fprintf(stderr,
+						"%s: Found %d available pages at index %d\n",
+						__func__, c, base);
+					return base;
+				}
+			} else {
+				base = -1;
+				c = 0;
+			}
+		}
+	}
 
-  return -1;
+	return -1;
 }
 
 static int
-uio_mem_alloc_to (pid_t * owners, int offset, int count, pid_t pid)
+uio_mem_alloc_to(pid_t * owners, int offset, int count, pid_t pid)
 {
-  pid_t * p = &owners[offset];
-  int i;
+	pid_t *p = &owners[offset];
+	int i;
 
-  for (i = 0; i < count; i++)
-    *p++ = pid;
+	for (i = 0; i < count; i++)
+		*p++ = pid;
 
-  return 0;
+	return 0;
 }
 
-static int
-uio_mem_alloc (pid_t * owners, int offset, int count)
+static int uio_mem_alloc(pid_t * owners, int offset, int count)
 {
-  return uio_mem_alloc_to (owners, offset, count, getpid());
+	return uio_mem_alloc_to(owners, offset, count, getpid());
 }
 
-static int
-uio_mem_free (pid_t * owners, int offset, int count)
+static int uio_mem_free(pid_t * owners, int offset, int count)
 {
-  return uio_mem_alloc_to (owners, offset, count, 0);
+	return uio_mem_alloc_to(owners, offset, count, 0);
 }
 
-void *
-uio_malloc (struct uio * uio, pid_t * owners, size_t size, int align)
+void *uio_malloc(struct uio *uio, pid_t * owners, size_t size, int align)
 {
-  unsigned long mem_base;
-  int pagesize, pages_req, pages_max;
-  int base;
+	unsigned long mem_base;
+	int pagesize, pages_req, pages_max;
+	int base;
 
-  if (uio->mem.address == 0) {
-    fprintf (stderr, "%s: Allocation failed: uio->mem.address NULL\n", __func__);
-    return NULL;
-  }
+	if (uio->mem.address == 0) {
+		fprintf(stderr,
+			"%s: Allocation failed: uio->mem.address NULL\n",
+			__func__);
+		return NULL;
+	}
 
-  pagesize = sysconf (_SC_PAGESIZE);
+	pagesize = sysconf(_SC_PAGESIZE);
 
-  pages_max = uio->mem.size / pagesize;
-  pages_req = (size / pagesize) + 1;
+	pages_max = uio->mem.size / pagesize;
+	pages_req = (size / pagesize) + 1;
 
-  if ((base = uio_mem_find (owners, pages_max, pages_req)) == -1)
-    return NULL;
+	if ((base = uio_mem_find(owners, pages_max, pages_req)) == -1)
+		return NULL;
 
-  uio_mem_alloc (owners, base, pages_req);
-  mem_base = uio->mem.address + (base*pagesize);
+	uio_mem_alloc(owners, base, pages_req);
+	mem_base = uio->mem.address + (base * pagesize);
 
-  return (void *)mem_base;
+	return (void *) mem_base;
 }
 
-void
-uio_free (struct uio * uio, pid_t * owners, void * address, size_t size)
+void uio_free(struct uio *uio, pid_t * owners, void *address, size_t size)
 {
-  int pagesize, base, pages_req;
+	int pagesize, base, pages_req;
 
 #ifdef DEBUG
-  fprintf (stderr, "%s: IN\n", __func__);
+	fprintf(stderr, "%s: IN\n", __func__);
 #endif
 
-  pagesize = sysconf (_SC_PAGESIZE);
+	pagesize = sysconf(_SC_PAGESIZE);
 
-  base = ((long)address - uio->mem.address) / pagesize;
-  pages_req = (size / pagesize) + 1;
-  uio_mem_free (owners, base, pages_req);
+	base = ((long) address - uio->mem.address) / pagesize;
+	pages_req = (size / pagesize) + 1;
+	uio_mem_free(owners, base, pages_req);
 }
 
-static void
-print_usage (int pid, long base, long top)
+static void print_usage(int pid, long base, long top)
 {
-  char fname[MAXNAMELEN], cmdline[MAXNAMELEN];
+	char fname[MAXNAMELEN], cmdline[MAXNAMELEN];
 
-  printf ("0x%08lx-0x%08lx : ", base, top);
+	printf("0x%08lx-0x%08lx : ", base, top);
 
-  if (pid == 0) {
-    printf ("----\n");
-  } else {
-    sprintf(fname, "/proc/%d/cmdline", pid);
-    if (fgets_with_openclose(fname, cmdline, MAXNAMELEN) < 0) {
-      printf ("%d\n", pid);
-    } else {
-      printf ("%d %s\n", pid, cmdline);
-    }
-  }
+	if (pid == 0) {
+		printf("----\n");
+	} else {
+		sprintf(fname, "/proc/%d/cmdline", pid);
+		if (fgets_with_openclose(fname, cmdline, MAXNAMELEN) < 0) {
+			printf("%d\n", pid);
+		} else {
+			printf("%d %s\n", pid, cmdline);
+		}
+	}
 }
 
 
-void
-uio_meminfo (struct uio * uio, pid_t * owners)
+void uio_meminfo(struct uio *uio, pid_t * owners)
 {
-  int i, pagesize, pages;
-  long addr, base, top;
-  pid_t pid=0, new_pid;
+	int i, pagesize, pages;
+	long addr, base, top;
+	pid_t pid = 0, new_pid;
 
-  pagesize = sysconf (_SC_PAGESIZE);
-  pages = (uio->mem.size / pagesize) + 1;
+	pagesize = sysconf(_SC_PAGESIZE);
+	pages = (uio->mem.size / pagesize) + 1;
 
-  base = addr = uio->mem.address;
-  top = addr + pagesize-1;
-  for (i=0; i < pages; i++) {
-    new_pid = *owners++;
-    if (new_pid == pid) {
-      top += pagesize;
-    } else {
-      if (i>0) {
-        /* Prev seg. ended */
-        print_usage (pid, base, top);
-      }
-      base = addr;
-      top = addr + pagesize-1;
-      pid = new_pid;
-    }
-    addr += pagesize;
-  }
-  print_usage (pid, base, top);
+	base = addr = uio->mem.address;
+	top = addr + pagesize - 1;
+	for (i = 0; i < pages; i++) {
+		new_pid = *owners++;
+		if (new_pid == pid) {
+			top += pagesize;
+		} else {
+			if (i > 0) {
+				/* Prev seg. ended */
+				print_usage(pid, base, top);
+			}
+			base = addr;
+			top = addr + pagesize - 1;
+			pid = new_pid;
+		}
+		addr += pagesize;
+	}
+	print_usage(pid, base, top);
 }
