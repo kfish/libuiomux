@@ -108,9 +108,6 @@ static int setup_uio_map(struct uio_device *udp, int nr, struct uio_map *ump)
 	return 0;
 }
 
-struct uio_device uio_dev;
-struct uio_map uio_mmio, uio_mem;
-
 int
 uio_close (struct uio * uio)
 {
@@ -147,7 +144,7 @@ uio_open (const char * name)
   }
 	
 #ifdef DEBUG
-  printf("uio_open: Found matching UIO device at %s\n", uio_dev.path);
+  printf("uio_open: Found matching UIO device at %s\n", uio->dev.path);
 #endif
 
   ret = setup_uio_map(&uio->dev, 0, &uio->mmio);
