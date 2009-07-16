@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -64,7 +65,7 @@ uiomux_reset_mem (struct uiomux * uiomux)
   int i, j, owners_len;
   char * o;
 
-  owners_len = (uiomux->shared_state->size - sizeof (struct uiomux_state)) / sizeof (pid_t);
+  owners_len = uiomux->shared_state->size - sizeof (struct uiomux_state);
   o = (char *)uiomux->shared_state + sizeof (struct uiomux_state);
 
   memset (o, 0, owners_len);
@@ -437,7 +438,7 @@ uiomux_sleep (struct uiomux * uiomux, uiomux_resource_t blockmask)
 
   /* Invalid if multiple bits are set, or block not found */
   if ((i = uiomux_get_block_index (uiomux, blockmask)) == -1)
-    return NULL;
+    return -1;
 
   block = &uiomux->blocks[i];
 
@@ -468,7 +469,7 @@ uiomux_malloc (struct uiomux * uiomux, uiomux_resource_t blockmask,
 
   if (block->uio) {
 #ifdef DEBUG
-    fprintf (stderr, "%s: Allocating %ld bytes for block %d\n", __func__, size, i);
+    fprintf (stderr, "%s: Allocating %d bytes for block %d\n", __func__, size, i);
 #endif
     mutex = &uiomux->shared_state->mutex[i].mutex;
     pthread_mutex_lock (mutex);

@@ -50,6 +50,13 @@
 #endif
 
 /*
+ * If \a state is non-NULL:
+ *   Initialize the owners table, ie. pointers from
+ *   shared_state->owners[i] to the start of the allocation
+ *   table for block i.
+ * If \a state is NULL:
+ *   skip the initialization and just calculate the size of the owners table,
+ *   ie. the sum of the sizes of the allocation tables for each block.
  * \returns The total size in bytes of the owners table.
  */
 static size_t
@@ -73,17 +80,17 @@ init_owners_table (struct uiomux_state * state)
   for (i = 0; i < UIOMUX_BLOCK_MAX; i++) {
     if ((name = uiomux_name (1<<i)) != NULL) {
       if ((uio = uio_open (name)) != NULL) {
-        n = uio->mem.size / pagesize;
+        n = (uio->mem.size / pagesize) + 1;
 
         if (state != NULL) {
-#ifdef DEBUG
-          fprintf (stderr, "%s: Initializing %ld pages for block %d ...\n", __func__, n, i);
-#endif
           state->owners[i] = owners;
-          owners += nr_pages;
+#ifdef DEBUG
+          fprintf (stderr, "%s: Tabling %d pages for block %d at %p ...\n", __func__, n, i, owners);
+#endif
+          owners += n;
 #ifdef DEBUG
         } else {
-          fprintf (stderr, "%s: Counting %ld pages for block %d ...\n", __func__, n, i);
+          fprintf (stderr, "%s: Counting %d pages for block %d ...\n", __func__, n, i);
 #endif
         }
         nr_pages += n;
@@ -191,7 +198,7 @@ map_shared_state (void)
     debug_info ("map_shared_state: Not mapped at proper address, trying with MAP_FIXED ...");
     exact_address = state->proper_address;
 #ifdef DEBUG
-    fprintf (stderr, "map_shared_state: exact_address %x\n", exact_address);
+    fprintf (stderr, "%s: exact_address %p\n", __func__, exact_address);
 #endif
     munmap ((void *)state, size);
     state = (struct uiomux_state *) mmap(exact_address, size, PROT_READ | PROT_WRITE,
