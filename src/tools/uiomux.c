@@ -27,6 +27,8 @@
 
 #include <uiomux/uiomux.h>
 
+extern void alloc (int argc, char *argv[]);
+
 static void
 version (void)
 {
@@ -57,6 +59,9 @@ usage (void)
   printf ("              UIOMux shared state. Note that any subsequent program using UIOMux\n");
   printf ("              will reallocate and initialize this shared state, including this\n");
   printf ("              tool's 'info' and 'reset' commands.\n");
+
+  printf ("\nUtilities:\n");
+  printf ("  alloc <n>   Allocate a specified number of bytes.\n");
 }
 
 static void
@@ -142,6 +147,8 @@ main (int argc, char *argv[])
     reset ();
   } else if (!strncmp (argv[1], "destroy", 8)) {
     destroy ();
+  } else if (!strncmp (argv[1], "alloc", 6)) {
+    alloc (argc, argv);
   } else {
     usage();
     exit (1);

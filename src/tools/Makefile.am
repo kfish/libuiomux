@@ -8,5 +8,5 @@ UIOMUX_LIBS = $(UIOMUXDIR)/libuiomux.la $(PTHREAD_LIBS) $(RT_LIBS)
 
 bin_PROGRAMS = uiomux
 
-uiomux_SOURCES = uiomux.c
+uiomux_SOURCES = uiomux.c uiomux-alloc.c
 uiomux_LDADD = $(UIOMUX_LIBS)
