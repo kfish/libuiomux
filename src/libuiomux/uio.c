@@ -207,16 +207,17 @@ static int uio_mem_find(pid_t * owners, int max, int count)
 		} else {	/* Got a base */
 			if (owners[i] == 0) {
 				c++;
-				if (c == count) {
-					fprintf(stderr,
-						"%s: Found %d available pages at index %d\n",
-						__func__, c, base);
-					return base;
-				}
 			} else {
 				base = -1;
 				c = 0;
 			}
+		}
+		if (c == count) {
+#ifdef DEBUG
+			fprintf(stderr, "%s: Found %d available pages at index %d\n",
+				__func__, c, base);
+#endif
+			return base;
 		}
 	}
 
