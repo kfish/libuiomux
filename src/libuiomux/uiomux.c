@@ -433,7 +433,7 @@ long
 uiomux_sleep (struct uiomux * uiomux, uiomux_resource_t blockmask)
 {
   struct uiomux_block * block;
-  long ret;
+  long ret=0;
   int i;
 
   /* Invalid if multiple bits are set, or block not found */
