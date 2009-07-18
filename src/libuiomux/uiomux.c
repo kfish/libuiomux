@@ -595,6 +595,17 @@ uiomux_query(void)
   return blocks;
 }
 
+static int
+uiomux_showversion (struct uiomux * uiomux)
+{
+  printf ("uiomux " VERSION ", built for shared state version %d\n", UIOMUX_STATE_VERSION);
+  fflush(stdout);
+
+  printf ("Current runtime state version %d\n", uiomux->shared_state->version);
+
+  return 0;
+}
+
 int
 uiomux_info (struct uiomux * uiomux)
 {
@@ -603,6 +614,8 @@ uiomux_info (struct uiomux * uiomux)
   struct uiomux_block * block;
   int i;
   long pagesize;
+
+  uiomux_showversion (uiomux);
 
   pagesize = sysconf (_SC_PAGESIZE);
 
@@ -627,6 +640,8 @@ uiomux_meminfo (struct uiomux * uiomux)
   struct uiomux_block * block;
   int i;
   long pagesize;
+
+  uiomux_showversion (uiomux);
 
   pagesize = sysconf (_SC_PAGESIZE);
 
