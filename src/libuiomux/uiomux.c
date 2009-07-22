@@ -38,126 +38,127 @@
 
 /* #define SAVE_RESTORE_REGISTERS */
 
-static int
-uiomux_unlock_all (struct uiomux * uiomux)
+static int uiomux_unlock_all(struct uiomux *uiomux)
 {
-  pthread_mutex_t * mutex;
-  int i;
+	pthread_mutex_t *mutex;
+	int i;
 
-  /* unlock mutexes */
-  for (i=UIOMUX_BLOCK_MAX-1; i >= 0; i--) {
+	/* unlock mutexes */
+	for (i = UIOMUX_BLOCK_MAX - 1; i >= 0; i--) {
 #ifdef DEBUG
-    fprintf (stderr, "%s: Unlocking block %d\n", __func__, i);
+		fprintf(stderr, "%s: Unlocking block %d\n", __func__, i);
 #endif
-    mutex = &uiomux->shared_state->mutex[i].mutex;
-    pthread_mutex_unlock (mutex);
-  }
+		mutex = &uiomux->shared_state->mutex[i].mutex;
+		pthread_mutex_unlock(mutex);
+	}
 
-  return 0;
+	return 0;
 }
 
 /*
  * Deallocate all memory.
  */
-static int
-uiomux_reset_mem (struct uiomux * uiomux)
+static int uiomux_reset_mem(struct uiomux *uiomux)
 {
-  int i, j, owners_len;
-  char * o;
+	int i, j, owners_len;
+	char *o;
 
-  owners_len = uiomux->shared_state->size - sizeof (struct uiomux_state);
-  o = (char *)uiomux->shared_state + sizeof (struct uiomux_state);
+	owners_len =
+	    uiomux->shared_state->size - sizeof(struct uiomux_state);
+	o = (char *) uiomux->shared_state + sizeof(struct uiomux_state);
 
-  memset (o, 0, owners_len);
+	memset(o, 0, owners_len);
 
-  return 0;
+	return 0;
 }
 
 /*
  * Deallocate memory which is allocated to dead processes.
  */
-static int
-uiomux_update_mem (struct uiomux * uiomux)
+static int uiomux_update_mem(struct uiomux *uiomux)
 {
-  int i, j, owners_len;
-  char * o;
-  pid_t * p, known_bad[8], known_good[8];
-  int kb=0, kg=0; /* indices into known_ tables */
-  char fname[256];
-  int ret;
-  struct stat statbuf;
+	int i, j, owners_len;
+	char *o;
+	pid_t *p, known_bad[8], known_good[8];
+	int kb = 0, kg = 0;	/* indices into known_ tables */
+	char fname[256];
+	int ret;
+	struct stat statbuf;
 
-  memset (known_bad, 0, sizeof(known_bad));
-  memset (known_good, 0, sizeof(known_good));
+	memset(known_bad, 0, sizeof(known_bad));
+	memset(known_good, 0, sizeof(known_good));
 
-  owners_len = (uiomux->shared_state->size - sizeof (struct uiomux_state)) / sizeof (pid_t);
-  o = (char *)uiomux->shared_state + sizeof (struct uiomux_state);
-  p = (pid_t *)o;
+	owners_len =
+	    (uiomux->shared_state->size -
+	     sizeof(struct uiomux_state)) / sizeof(pid_t);
+	o = (char *) uiomux->shared_state + sizeof(struct uiomux_state);
+	p = (pid_t *) o;
 
-  for (i=0; i < owners_len; i++) {
-    if (*p != 0) {
-      /* Check cached good values */
-      for (j=0; j<kg; j++) {
-        if (*p == known_good[j]) {
-          goto update_next;
-        }
-      }
-      /* Check cached bad values */
-      for (j=0; j<kb; j++) {
-        if (*p == known_bad[j]) {
-          *p = 0;
-          goto update_next;
-        } 
-      }
+	for (i = 0; i < owners_len; i++) {
+		if (*p != 0) {
+			/* Check cached good values */
+			for (j = 0; j < kg; j++) {
+				if (*p == known_good[j]) {
+					goto update_next;
+				}
+			}
+			/* Check cached bad values */
+			for (j = 0; j < kb; j++) {
+				if (*p == known_bad[j]) {
+					*p = 0;
+					goto update_next;
+				}
+			}
 
-      /* Check against /proc/pid */
-      snprintf (fname, 256, "/proc/%d", *p);
-      if (stat (fname, &statbuf) == 0) {
-        /* /proc/pid good */
-        if (kg < 8) {
-          known_good[kg] = *p;
-          kg++;
-        }
-      } else {
-        /* /proc/pid bad */
-        if (kb < 8) {
-          known_bad[kb] = *p;
-          kb++;
-        }
-        *p = 0;
-      }
-    }
+			/* Check against /proc/pid */
+			snprintf(fname, 256, "/proc/%d", *p);
+			if (stat(fname, &statbuf) == 0) {
+				/* /proc/pid good */
+				if (kg < 8) {
+					known_good[kg] = *p;
+					kg++;
+				}
+			} else {
+				/* /proc/pid bad */
+				if (kb < 8) {
+					known_bad[kb] = *p;
+					kb++;
+				}
+				*p = 0;
+			}
+		}
 
-update_next:
-    p++;
-  }
+	      update_next:
+		p++;
+	}
 
-  return 0;
+	return 0;
 }
 
 /*
  * Deallocate memory allocated to current process.
  */
-static int
-uiomux_free_mem (struct uiomux * uiomux)
+static int uiomux_free_mem(struct uiomux *uiomux)
 {
-  int i, j, owners_len;
-  char * o;
-  pid_t * p, mypid;
+	int i, j, owners_len;
+	char *o;
+	pid_t *p, mypid;
 
-  mypid = getpid();
+	mypid = getpid();
 
-  owners_len = (uiomux->shared_state->size - sizeof (struct uiomux_state)) / sizeof (pid_t);
-  o = (char *)uiomux->shared_state + sizeof (struct uiomux_state);
-  p = (pid_t *)o;
+	owners_len =
+	    (uiomux->shared_state->size -
+	     sizeof(struct uiomux_state)) / sizeof(pid_t);
+	o = (char *) uiomux->shared_state + sizeof(struct uiomux_state);
+	p = (pid_t *) o;
 
-  for (i=0; i < owners_len; i++) {
-    if (*p == mypid)
-      *p = 0;
-    p++;
-  }
+	for (i = 0; i < owners_len; i++) {
+		if (*p == mypid)
+			*p = 0;
+		p++;
+	}
 
-  return 0;
+	return 0;
 }
 
 /**
@@ -187,471 +188,500 @@ uiomux_free_mem (struct uiomux * uiomux)
  * ==31337==    by 0x403C8E1: uiomux_close (uiomux.c:122)
  * ==31337==    by 0x804868D: main (uiomux.c:65)
  */
-static void
-uiomux_on_exit (int exit_status, void * arg)
+static void uiomux_on_exit(int exit_status, void *arg)
 {
-  struct uiomux * uiomux = (struct uiomux *)arg;
+	struct uiomux *uiomux = (struct uiomux *) arg;
 
-  if (uiomux == NULL) return;
+	if (uiomux == NULL)
+		return;
 
 #ifdef DEBUG
-  fprintf (stderr, "%s: IN\n", __func__);
+	fprintf(stderr, "%s: IN\n", __func__);
 #endif
 
-  /* Only attempt the unlock and free if the shared_state is still correctly
-   * mapped at its proper address */
-  if (uiomux->shared_state && uiomux->shared_state->proper_address == uiomux->shared_state) {
-    uiomux_close (uiomux);
-  }
+	/* Only attempt the unlock and free if the shared_state is still correctly
+	 * mapped at its proper address */
+	if (uiomux->shared_state
+	    && uiomux->shared_state->proper_address ==
+	    uiomux->shared_state) {
+		uiomux_close(uiomux);
+	}
 
-  /* Finally, free uiomux */
-  free (uiomux);
+	/* Finally, free uiomux */
+	free(uiomux);
 }
 
-struct uiomux *
-uiomux_open (void)
+struct uiomux *uiomux_open(void)
 {
-  struct uiomux * uiomux;
-  struct uiomux_state * state;
-  struct uiomux_block * block;
-  const char * name = NULL;
-  int i;
+	struct uiomux *uiomux;
+	struct uiomux_state *state;
+	struct uiomux_block *block;
+	const char *name = NULL;
+	int i;
 
-  /* Get the shared state, creating and initializing it if necessary */
-  state = get_shared_state();
+	/* Get the shared state, creating and initializing it if necessary */
+	state = get_shared_state();
 
-  if (state == NULL) return NULL;
+	if (state == NULL)
+		return NULL;
 
-  uiomux = (struct uiomux *)calloc(1, sizeof(*uiomux));
+	uiomux = (struct uiomux *) calloc(1, sizeof(*uiomux));
 
-  uiomux->shared_state = state;
+	uiomux->shared_state = state;
 
-  /* Allocate space for register store */
-  for (i = 0; i < UIOMUX_BLOCK_MAX; i++) {
-    block = &uiomux->blocks[i];
-    if ((name = uiomux_name (1<<i)) != NULL) {
-      if ((block->uio = uio_open (name)) != NULL) {
+	/* Allocate space for register store */
+	for (i = 0; i < UIOMUX_BLOCK_MAX; i++) {
+		block = &uiomux->blocks[i];
+		if ((name = uiomux_name(1 << i)) != NULL) {
+			if ((block->uio = uio_open(name)) != NULL) {
 #ifdef DEBUG
-        fprintf (stderr, "%s: Allocating %ld bytes for %s registers...\n", __func__,
-                 block->uio->mmio.size, block->uio->dev.name);
+				fprintf(stderr,
+					"%s: Allocating %ld bytes for %s registers...\n",
+					__func__, block->uio->mmio.size,
+					block->uio->dev.name);
 #endif
-        block->nr_registers = block->uio->mmio.size / 4;
-        block->registers = (long *)malloc(block->uio->mmio.size);
-      }
-    }
-  }
+				block->nr_registers =
+				    block->uio->mmio.size / 4;
+				block->registers =
+				    (long *) malloc(block->uio->mmio.size);
+			}
+		}
+	}
 
-  /* Register on_exit() cleanup function */
-  on_exit (uiomux_on_exit, uiomux);
+	/* Register on_exit() cleanup function */
+	on_exit(uiomux_on_exit, uiomux);
 
-  /* Update memory allocs */
-  uiomux_update_mem (uiomux);
-  
-  return uiomux;
+	/* Update memory allocs */
+	uiomux_update_mem(uiomux);
+
+	return uiomux;
 }
 
-static void
-uiomux_delete (struct uiomux * uiomux)
+static void uiomux_delete(struct uiomux *uiomux)
 {
-  struct uiomux_block * block;
-  int i;
+	struct uiomux_block *block;
+	int i;
 
-  /* Mark this as NULL to invalidate uiomux for uiomux_on_exit */
-  uiomux->shared_state = NULL;
+	/* Mark this as NULL to invalidate uiomux for uiomux_on_exit */
+	uiomux->shared_state = NULL;
 
-  for (i = 0; i < UIOMUX_BLOCK_MAX; i++) {
-    block = &uiomux->blocks[i];
-    uio_close (block->uio);
-    if (block->registers != NULL)
-      free (block->registers);
-  }
+	for (i = 0; i < UIOMUX_BLOCK_MAX; i++) {
+		block = &uiomux->blocks[i];
+		uio_close(block->uio);
+		if (block->registers != NULL)
+			free(block->registers);
+	}
 
-  /* uiomux will be free'd on exit */
+	/* uiomux will be free'd on exit */
 }
 
-int
-uiomux_close (struct uiomux * uiomux)
+int uiomux_close(struct uiomux *uiomux)
 {
-  if (uiomux == NULL) return -1;
+	if (uiomux == NULL)
+		return -1;
 
 #ifdef DEBUG
-  fprintf (stderr, "%s: IN\n", __func__);
+	fprintf(stderr, "%s: IN\n", __func__);
 #endif
 
-  uiomux_free_mem (uiomux);
-  uiomux_unlock_all (uiomux);
-  unmap_shared_state (uiomux->shared_state);
+	uiomux_free_mem(uiomux);
+	uiomux_unlock_all(uiomux);
+	unmap_shared_state(uiomux->shared_state);
 
-  uiomux_delete (uiomux);
+	uiomux_delete(uiomux);
 
-  return 0;
+	return 0;
 }
 
-int
-uiomux_system_reset (struct uiomux * uiomux)
+int uiomux_system_reset(struct uiomux *uiomux)
 {
-  if (uiomux == NULL) return -1;
+	if (uiomux == NULL)
+		return -1;
 
-  if (uiomux->shared_state == NULL) {
-    uiomux->shared_state = get_shared_state ();
-  }
+	if (uiomux->shared_state == NULL) {
+		uiomux->shared_state = get_shared_state();
+	}
 
-  if (uiomux->shared_state == NULL) {
-    fprintf (stderr, "Incorrect version, cannot reset.\n");
-    return -1;
-  }
-    
-  init_shared_state (uiomux->shared_state);
-  uiomux_reset_mem (uiomux);
+	if (uiomux->shared_state == NULL) {
+		fprintf(stderr, "Incorrect version, cannot reset.\n");
+		return -1;
+	}
 
-  return 0;
+	init_shared_state(uiomux->shared_state);
+	uiomux_reset_mem(uiomux);
+
+	return 0;
 }
 
-int
-uiomux_system_destroy (struct uiomux * uiomux)
+int uiomux_system_destroy(struct uiomux *uiomux)
 {
-  destroy_shared_state (uiomux->shared_state);
+	destroy_shared_state(uiomux->shared_state);
 
-  uiomux_delete (uiomux);
+	uiomux_delete(uiomux);
 
-  return 0;
+	return 0;
 }
 
-int
-uiomux_lock (struct uiomux * uiomux, uiomux_resource_t blockmask)
+int uiomux_lock(struct uiomux *uiomux, uiomux_resource_t blockmask)
 {
-  pthread_mutex_t * mutex;
-  struct uiomux_block * block;
-  unsigned long *reg_base;
-  int i, k, ret;
+	pthread_mutex_t *mutex;
+	struct uiomux_block *block;
+	unsigned long *reg_base;
+	int i, k, ret;
 
-  for (i=0; i < UIOMUX_BLOCK_MAX; i++) {
-    if (blockmask & (1<<i)) {
-      /* lock mutex */
+	for (i = 0; i < UIOMUX_BLOCK_MAX; i++) {
+		if (blockmask & (1 << i)) {
+			/* lock mutex */
 #ifdef DEBUG
-      fprintf (stderr, "%s: PID %d locking block %d\n", __func__, getpid(), i);
+			fprintf(stderr, "%s: PID %d locking block %d\n",
+				__func__, getpid(), i);
 #endif
-      mutex = &uiomux->shared_state->mutex[i].mutex;
-      ret = pthread_mutex_lock (mutex);
-      if (ret != 0)
-        fprintf (stderr, "%s: FAILED Locking block %d\n", __func__, i);
+			mutex = &uiomux->shared_state->mutex[i].mutex;
+			ret = pthread_mutex_lock(mutex);
+			if (ret != 0)
+				fprintf(stderr,
+					"%s: FAILED Locking block %d\n",
+					__func__, i);
 #ifdef DEBUG
-      else
-        fprintf (stderr, "%s: PID %d LOCKED block %d\n", __func__, getpid(), i);
+			else
+				fprintf(stderr,
+					"%s: PID %d LOCKED block %d\n",
+					__func__, getpid(), i);
 #endif
-      
+
 
 #ifdef SAVE_RESTORE_REGISTERS
-      /* restore registers */
-      if (!pthread_equal (uiomux->shared_state->mutex[i].prev_holder,
-                          pthread_self())) {
-        block = &uiomux->blocks[i];
-        if (block->uio) {
-          reg_base = block->uio->mmio.iomem;
-          for (k=0; k < block->nr_registers; k++) {
-            reg_base[k] = block->registers[k];
-          }
-        }
-      }
+			/* restore registers */
+			if (!pthread_equal
+			    (uiomux->shared_state->mutex[i].prev_holder,
+			     pthread_self())) {
+				block = &uiomux->blocks[i];
+				if (block->uio) {
+					reg_base = block->uio->mmio.iomem;
+					for (k = 0;
+					     k < block->nr_registers;
+					     k++) {
+						reg_base[k] =
+						    block->registers[k];
+					}
+				}
+			}
 #endif
 
-    }
-  }
+		}
+	}
 
 
-  return 0;
+	return 0;
 }
 
-int
-uiomux_unlock (struct uiomux * uiomux, uiomux_resource_t blockmask)
+int uiomux_unlock(struct uiomux *uiomux, uiomux_resource_t blockmask)
 {
-  pthread_mutex_t * mutex;
-  struct uiomux_block * block;
-  unsigned long *reg_base;
-  int i, k, ret;
+	pthread_mutex_t *mutex;
+	struct uiomux_block *block;
+	unsigned long *reg_base;
+	int i, k, ret;
 
-  for (i=UIOMUX_BLOCK_MAX-1; i >= 0; i--) {
-    if (blockmask & (1<<i)) {
+	for (i = UIOMUX_BLOCK_MAX - 1; i >= 0; i--) {
+		if (blockmask & (1 << i)) {
 #ifdef SAVE_RESTORE_REGISTERS
-      /* store registers */
-      block = &uiomux->blocks[i];
-      if (block->uio) {
-        reg_base = block->uio->mmio.iomem;
-        for (k=0; k < block->nr_registers; k++) {
-          block->registers[k] = reg_base[k];
-        }
-      }
+			/* store registers */
+			block = &uiomux->blocks[i];
+			if (block->uio) {
+				reg_base = block->uio->mmio.iomem;
+				for (k = 0; k < block->nr_registers; k++) {
+					block->registers[k] = reg_base[k];
+				}
+			}
 #endif
 
-      /* record last holder */
-      uiomux->shared_state->mutex[i].prev_holder = pthread_self();
+			/* record last holder */
+			uiomux->shared_state->mutex[i].prev_holder =
+			    pthread_self();
 
-      /* unlock mutex */
+			/* unlock mutex */
 #ifdef DEBUG
-      fprintf (stderr, "%s: PID %d unlocking block %d\n", __func__, getpid(), i);
+			fprintf(stderr, "%s: PID %d unlocking block %d\n",
+				__func__, getpid(), i);
 #endif
-      mutex = &uiomux->shared_state->mutex[i].mutex;
-      ret = pthread_mutex_unlock (mutex);
-      if (ret != 0)
-        fprintf (stderr, "%s: FAILED Unlocking block %d\n", __func__, i);
+			mutex = &uiomux->shared_state->mutex[i].mutex;
+			ret = pthread_mutex_unlock(mutex);
+			if (ret != 0)
+				fprintf(stderr,
+					"%s: FAILED Unlocking block %d\n",
+					__func__, i);
 #ifdef DEBUG
-      else
-        fprintf (stderr, "%s: PID %d UNLOCKED block %d\n", __func__, getpid(), i);
+			else
+				fprintf(stderr,
+					"%s: PID %d UNLOCKED block %d\n",
+					__func__, getpid(), i);
 #endif
-    }
-  }
+		}
+	}
 
-  return 0;
+	return 0;
 }
 
 #define MULTI_BIT(x) (((long)x)&(((long)x)-1))
 
 static int
-uiomux_get_block_index (struct uiomux * uiomux, uiomux_resource_t blockmask)
+uiomux_get_block_index(struct uiomux *uiomux, uiomux_resource_t blockmask)
 {
-  struct uiomux_block * block;
-  int i;
+	struct uiomux_block *block;
+	int i;
 
-  /* Invalid if multiple bits are set */
-  if (MULTI_BIT(blockmask)) {
+	/* Invalid if multiple bits are set */
+	if (MULTI_BIT(blockmask)) {
 #ifdef DEBUG
-    fprintf (stderr, "%s: Multiple blocks specified\n", __func__);
+		fprintf(stderr, "%s: Multiple blocks specified\n",
+			__func__);
 #endif
-    return -1;
-  }
+		return -1;
+	}
 
-  for (i=0; i < UIOMUX_BLOCK_MAX; i++) {
-    if (blockmask & (1<<i)) {
-      return i;
-    }
-  }
+	for (i = 0; i < UIOMUX_BLOCK_MAX; i++) {
+		if (blockmask & (1 << i)) {
+			return i;
+		}
+	}
 
-  return -1;
+	return -1;
 }
 
-long
-uiomux_sleep (struct uiomux * uiomux, uiomux_resource_t blockmask)
+long uiomux_sleep(struct uiomux *uiomux, uiomux_resource_t blockmask)
 {
-  struct uiomux_block * block;
-  long ret=0;
-  int i;
+	struct uiomux_block *block;
+	long ret = 0;
+	int i;
 
-  /* Invalid if multiple bits are set, or block not found */
-  if ((i = uiomux_get_block_index (uiomux, blockmask)) == -1)
-    return -1;
+	/* Invalid if multiple bits are set, or block not found */
+	if ((i = uiomux_get_block_index(uiomux, blockmask)) == -1)
+		return -1;
 
-  block = &uiomux->blocks[i];
+	block = &uiomux->blocks[i];
 
-  if (block->uio) {
+	if (block->uio) {
 #ifdef DEBUG
-    fprintf (stderr, "%s: Waiting for block %d\n", __func__, i);
+		fprintf(stderr, "%s: Waiting for block %d\n", __func__, i);
 #endif
-    ret = uio_sleep (block->uio);
-  }
+		ret = uio_sleep(block->uio);
+	}
 
-  return ret;
+	return ret;
 }
 
-void *
-uiomux_malloc (struct uiomux * uiomux, uiomux_resource_t blockmask,
-               size_t size, int align)
+void *uiomux_malloc(struct uiomux *uiomux, uiomux_resource_t blockmask,
+		    size_t size, int align)
 {
-  pthread_mutex_t * mutex;
-  struct uiomux_block * block;
-  void * ret = NULL;
-  int i;
+	pthread_mutex_t *mutex;
+	struct uiomux_block *block;
+	void *ret = NULL;
+	int i;
 
-  /* Invalid if multiple bits are set, or block not found */
-  if ((i = uiomux_get_block_index (uiomux, blockmask)) == -1)
-    return NULL;
+	/* Invalid if multiple bits are set, or block not found */
+	if ((i = uiomux_get_block_index(uiomux, blockmask)) == -1)
+		return NULL;
 
-  block = &uiomux->blocks[i];
+	block = &uiomux->blocks[i];
 
-  if (block->uio) {
+	if (block->uio) {
 #ifdef DEBUG
-    fprintf (stderr, "%s: Allocating %d bytes for block %d\n", __func__, size, i);
+		fprintf(stderr, "%s: Allocating %d bytes for block %d\n",
+			__func__, size, i);
 #endif
-    mutex = &uiomux->shared_state->mutex[i].mutex;
-    pthread_mutex_lock (mutex);
+		mutex = &uiomux->shared_state->mutex[i].mutex;
+		pthread_mutex_lock(mutex);
 
-    ret = uio_malloc (block->uio,
-                      uiomux->shared_state->owners[i],
-                      size, align);
+		ret = uio_malloc(block->uio,
+				 uiomux->shared_state->owners[i],
+				 size, align);
 
-    pthread_mutex_unlock (mutex);
-  }
+		pthread_mutex_unlock(mutex);
+	}
 
-  return ret;
+	return ret;
 }
 
 void
-uiomux_free (struct uiomux * uiomux, uiomux_resource_t blockmask,
-             void * address, size_t size)
+uiomux_free(struct uiomux *uiomux, uiomux_resource_t blockmask,
+	    void *address, size_t size)
 {
-  pthread_mutex_t * mutex;
-  struct uiomux_block * block;
-  int i;
+	pthread_mutex_t *mutex;
+	struct uiomux_block *block;
+	int i;
 
-  /* Invalid if multiple bits are set, or block not found */
-  if ((i = uiomux_get_block_index (uiomux, blockmask)) == -1)
-    return;
+	/* Invalid if multiple bits are set, or block not found */
+	if ((i = uiomux_get_block_index(uiomux, blockmask)) == -1)
+		return;
 
-  block = &uiomux->blocks[i];
+	block = &uiomux->blocks[i];
 
-  if (block->uio) {
+	if (block->uio) {
 #ifdef DEBUG
-    fprintf (stderr, "%s: Freeing memory for block %d\n", __func__, i);
+		fprintf(stderr, "%s: Freeing memory for block %d\n",
+			__func__, i);
 #endif
-    mutex = &uiomux->shared_state->mutex[i].mutex;
-    pthread_mutex_lock (mutex);
+		mutex = &uiomux->shared_state->mutex[i].mutex;
+		pthread_mutex_lock(mutex);
 
-    uio_free (block->uio, uiomux->shared_state->owners[i], address, size);
+		uio_free(block->uio, uiomux->shared_state->owners[i],
+			 address, size);
 
-    pthread_mutex_unlock (mutex);
-  }
+		pthread_mutex_unlock(mutex);
+	}
 }
 
 unsigned long
-uiomux_get_mmio (struct uiomux * uiomux, uiomux_resource_t blockmask,
-                 unsigned long * address, unsigned long * size, void ** iomem)
+uiomux_get_mmio(struct uiomux *uiomux, uiomux_resource_t blockmask,
+		unsigned long *address, unsigned long *size, void **iomem)
 {
-  struct uiomux_block * block;
-  int i;
+	struct uiomux_block *block;
+	int i;
 
-  /* Invalid if multiple bits are set, or block not found */
-  if ((i = uiomux_get_block_index (uiomux, blockmask)) == -1)
-    return 0;
+	/* Invalid if multiple bits are set, or block not found */
+	if ((i = uiomux_get_block_index(uiomux, blockmask)) == -1)
+		return 0;
 
-  block = &uiomux->blocks[i];
+	block = &uiomux->blocks[i];
 
-  if (address) *address = block->uio->mmio.address;
-  if (size) *size = block->uio->mmio.size;
-  if (iomem) *iomem = block->uio->mmio.iomem;
+	if (address)
+		*address = block->uio->mmio.address;
+	if (size)
+		*size = block->uio->mmio.size;
+	if (iomem)
+		*iomem = block->uio->mmio.iomem;
 
-  return block->uio->mmio.address;
+	return block->uio->mmio.address;
 }
 
 unsigned long
-uiomux_get_mem (struct uiomux * uiomux, uiomux_resource_t blockmask,
-                unsigned long * address, unsigned long * size, void ** iomem)
+uiomux_get_mem(struct uiomux *uiomux, uiomux_resource_t blockmask,
+	       unsigned long *address, unsigned long *size, void **iomem)
 {
-  struct uiomux_block * block;
-  int i;
+	struct uiomux_block *block;
+	int i;
 
-  /* Invalid if multiple bits are set, or block not found */
-  if ((i = uiomux_get_block_index (uiomux, blockmask)) == -1)
-    return 0;
+	/* Invalid if multiple bits are set, or block not found */
+	if ((i = uiomux_get_block_index(uiomux, blockmask)) == -1)
+		return 0;
 
-  block = &uiomux->blocks[i];
+	block = &uiomux->blocks[i];
 
-  if (address) *address = block->uio->mem.address;
-  if (size) *size = block->uio->mem.size;
-  if (iomem) *iomem = block->uio->mem.iomem;
+	if (address)
+		*address = block->uio->mem.address;
+	if (size)
+		*size = block->uio->mem.size;
+	if (iomem)
+		*iomem = block->uio->mem.iomem;
 
-  return block->uio->mem.address;
+	return block->uio->mem.address;
 }
 
-const char *
-uiomux_name(uiomux_resource_t block)
+const char *uiomux_name(uiomux_resource_t block)
 {
-  switch (block) {
-    case UIOMUX_SH_BEU:
-      return "BEU";
-      break;
-    case UIOMUX_SH_CEU:
-      return "CEU";
-      break;
-    case UIOMUX_SH_JPU:
-      return "JPU";
-      break;
-    case UIOMUX_SH_VEU:
-      return "VEU";
-      break;
-    case UIOMUX_SH_VPU:
-      return "VPU5";
-      break;
-    default:
-      return NULL;
-  }
+	switch (block) {
+	case UIOMUX_SH_BEU:
+		return "BEU";
+		break;
+	case UIOMUX_SH_CEU:
+		return "CEU";
+		break;
+	case UIOMUX_SH_JPU:
+		return "JPU";
+		break;
+	case UIOMUX_SH_VEU:
+		return "VEU";
+		break;
+	case UIOMUX_SH_VPU:
+		return "VPU5";
+		break;
+	default:
+		return NULL;
+	}
 }
 
-uiomux_resource_t
-uiomux_query(void)
+uiomux_resource_t uiomux_query(void)
 {
-  uiomux_resource_t blocks = UIOMUX_NONE;
-  struct uio * uio;
-  const char * name = NULL;
-  int i;
+	uiomux_resource_t blocks = UIOMUX_NONE;
+	struct uio *uio;
+	const char *name = NULL;
+	int i;
 
-  for (i=0; i < UIOMUX_BLOCK_MAX; i++) {
-    if ((name = uiomux_name (1<<i)) != NULL) {
-      if ((uio = uio_open (name)) != NULL) {
-        blocks |= (1<<i);
-        uio_close (uio);
-      }
-    }
-  }
+	for (i = 0; i < UIOMUX_BLOCK_MAX; i++) {
+		if ((name = uiomux_name(1 << i)) != NULL) {
+			if ((uio = uio_open(name)) != NULL) {
+				blocks |= (1 << i);
+				uio_close(uio);
+			}
+		}
+	}
 
-  return blocks;
+	return blocks;
 }
 
-static int
-uiomux_showversion (struct uiomux * uiomux)
+static int uiomux_showversion(struct uiomux *uiomux)
 {
-  printf ("uiomux " VERSION ", built for shared state version %d\n", UIOMUX_STATE_VERSION);
-  fflush(stdout);
+	printf("uiomux " VERSION ", built for shared state version %d\n",
+	       UIOMUX_STATE_VERSION);
+	fflush(stdout);
 
-  printf ("Current runtime state version %d\n", uiomux->shared_state->version);
+	printf("Current runtime state version %d\n",
+	       uiomux->shared_state->version);
 
-  return 0;
+	return 0;
 }
 
-int
-uiomux_info (struct uiomux * uiomux)
+int uiomux_info(struct uiomux *uiomux)
 {
-  uiomux_resource_t blocks = UIOMUX_NONE;
-  struct uiomux_state * state;
-  struct uiomux_block * block;
-  int i;
-  long pagesize;
+	uiomux_resource_t blocks = UIOMUX_NONE;
+	struct uiomux_state *state;
+	struct uiomux_block *block;
+	int i;
+	long pagesize;
 
-  uiomux_showversion (uiomux);
+	uiomux_showversion(uiomux);
 
-  pagesize = sysconf (_SC_PAGESIZE);
+	pagesize = sysconf(_SC_PAGESIZE);
 
-  for (i = 0; i < UIOMUX_BLOCK_MAX; i++) {
-    block = &uiomux->blocks[i];
-    if (block->uio != NULL) {
-      printf ("%s: %s", block->uio->dev.path, block->uio->dev.name);
-      printf ("\tmmio\t0x%8lx\t0x%8lx bytes (%ld pages)\n\tmem\t0x%8lx\t0x%8lx bytes (%ld pages)\n",
-              block->uio->mmio.address, block->uio->mmio.size, block->uio->mmio.size/pagesize,
-              block->uio->mem.address, block->uio->mem.size, block->uio->mem.size/pagesize);
-    }
-  }
+	for (i = 0; i < UIOMUX_BLOCK_MAX; i++) {
+		block = &uiomux->blocks[i];
+		if (block->uio != NULL) {
+			printf("%s: %s", block->uio->dev.path,
+			       block->uio->dev.name);
+			printf
+			    ("\tmmio\t0x%8lx\t0x%8lx bytes (%ld pages)\n\tmem\t0x%8lx\t0x%8lx bytes (%ld pages)\n",
+			     block->uio->mmio.address,
+			     block->uio->mmio.size,
+			     block->uio->mmio.size / pagesize,
+			     block->uio->mem.address, block->uio->mem.size,
+			     block->uio->mem.size / pagesize);
+		}
+	}
 
-  return 0;
+	return 0;
 }
 
-int
-uiomux_meminfo (struct uiomux * uiomux)
+int uiomux_meminfo(struct uiomux *uiomux)
 {
-  uiomux_resource_t blocks = UIOMUX_NONE;
-  struct uiomux_state * state;
-  struct uiomux_block * block;
-  int i;
-  long pagesize;
+	uiomux_resource_t blocks = UIOMUX_NONE;
+	struct uiomux_state *state;
+	struct uiomux_block *block;
+	int i;
+	long pagesize;
 
-  uiomux_showversion (uiomux);
+	uiomux_showversion(uiomux);
 
-  pagesize = sysconf (_SC_PAGESIZE);
+	pagesize = sysconf(_SC_PAGESIZE);
 
-  for (i = 0; i < UIOMUX_BLOCK_MAX; i++) {
-    block = &uiomux->blocks[i];
-    if (block->uio != NULL) {
-      printf ("%s: %s", block->uio->dev.path, block->uio->dev.name);
-      uio_meminfo (block->uio, uiomux->shared_state->owners[i]);
-    }
-  }
+	for (i = 0; i < UIOMUX_BLOCK_MAX; i++) {
+		block = &uiomux->blocks[i];
+		if (block->uio != NULL) {
+			printf("%s: %s", block->uio->dev.path,
+			       block->uio->dev.name);
+			uio_meminfo(block->uio,
+				    uiomux->shared_state->owners[i]);
+		}
+	}
 
-  return 0;
+	return 0;
 }
