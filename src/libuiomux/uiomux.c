@@ -580,9 +580,6 @@ uiomux_get_mem(struct uiomux *uiomux, uiomux_resource_t blockmask,
 static unsigned long
 uio_map_virt_to_phys(struct uio_map *map, void *virt_address)
 {
-	fprintf (stderr, "%s: map (%lx -> %lx [%ld bytes]): %lx\n", __FUNCTION__,
-			map->address, map->iomem, map->size, virt_address);
-
 	if ((virt_address >= map->iomem)
 	    && ((unsigned long) (virt_address - map->iomem) < map->size))
 		return map->address +
