@@ -248,13 +248,13 @@ static int uio_mem_free(pid_t * owners, int offset, int count)
 
 void *uio_malloc(struct uio *uio, pid_t * owners, size_t size, int align)
 {
-	unsigned long mem_base;
+	unsigned char * mem_base;
 	int pagesize, pages_req, pages_max;
 	int base;
 
-	if (uio->mem.address == 0) {
+	if (uio->mem.iomem == NULL) {
 		fprintf(stderr,
-			"%s: Allocation failed: uio->mem.address NULL\n",
+			"%s: Allocation failed: uio->mem.iomem NULL\n",
 			__func__);
 		return NULL;
 	}
@@ -268,9 +268,9 @@ void *uio_malloc(struct uio *uio, pid_t * owners, size_t size, int align)
 		return NULL;
 
 	uio_mem_alloc(owners, base, pages_req);
-	mem_base = uio->mem.address + (base * pagesize);
+	mem_base = uio->mem.iomem + (base * pagesize);
 
-	return (void *) mem_base;
+	return mem_base;
 }
 
 void uio_free(struct uio *uio, pid_t * owners, void *address, size_t size)
@@ -283,7 +283,7 @@ void uio_free(struct uio *uio, pid_t * owners, void *address, size_t size)
 
 	pagesize = sysconf(_SC_PAGESIZE);
 
-	base = ((long) address - uio->mem.address) / pagesize;
+	base = ((int)(address - uio->mem.iomem)) / pagesize;
 	pages_req = (size / pagesize) + 1;
 	uio_mem_free(owners, base, pages_req);
 }
