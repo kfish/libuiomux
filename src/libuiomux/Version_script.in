@@ -19,6 +19,7 @@
 		uiomux_meminfo;
 		uiomux_get_mmio;
 		uiomux_get_mem;
+		uiomux_virt_to_phys;
 		uiomux_malloc;
 		uiomux_free;
 

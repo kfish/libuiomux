@@ -255,6 +255,19 @@ uiomux_get_mem (UIOMux * uiomux, uiomux_resource_t resource,
                 unsigned long * address, unsigned long * size, void ** iomem);
 
 /**
+ * Convert a virtual address to a physical address
+ * \param uiomux A UIOMux handle
+ * \param resource A single named resource
+ * \param virt_address Virtual address to convert
+ * \returns Physical address corresponding to mapped virtual address
+ * \retval -1 Failure: resource not managed, or more than one resource given,
+ *            or virtual address is not in range mapped for given resource.
+ */
+unsigned long
+uiomux_virt_to_phys (UIOMux * uiomux, uiomux_resource_t blockmask,
+                     void * virt_address);
+
+/**
  * Allocate iomem from a UIO managed resource.
  * \param uiomux A UIOMux handle
  * \param resource A single named resource
