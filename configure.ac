@@ -25,7 +25,7 @@ AC_PREREQ(2.53)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(libuiomux, 0.6.0)
+AM_INIT_AUTOMAKE(libuiomux, 1.0.0)
 AM_CONFIG_HEADER(config.h)
 
 ################################################################################
@@ -45,7 +45,7 @@ AM_CONFIG_HEADER(config.h)
 #     then set AGE to 0.                                                       #
 #                                                                              #
 ################################################################################
-SHARED_VERSION_INFO="1:0:0"
+SHARED_VERSION_INFO="2:0:1"
 SHLIB_VERSION_ARG=""
 
 # Checks for programs.
