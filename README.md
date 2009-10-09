@@ -78,6 +78,8 @@ Commandline tool
                   will reallocate and initialize this shared state, including this
                   tool's 'info' and 'reset' commands.
 
+    Utilities:
+      alloc <n>   Allocate a specified number of bytes.
 
 
 libuiomux API
@@ -98,7 +100,7 @@ following names are defined:
     UIOMUX_SH_CEU
     UIOMUX_SH_JPU
     UIOMUX_SH_VEU
-    UIOMUX_SH_VEU
+    UIOMUX_SH_VPU
 
 These identifiers are bitmasked together as the return value from
 uiomux_query(), or as arguments to uiomux_lock() and uiomux_unlock().
