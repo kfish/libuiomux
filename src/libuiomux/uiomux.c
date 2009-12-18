@@ -588,6 +588,16 @@ uio_map_virt_to_phys(struct uio_map *map, void *virt_address)
 	return (unsigned long) -1;
 }
 
+static void *
+uio_map_phys_to_virt(struct uio_map *map, long phys_address)
+{
+	if ((phys_address >= map->address)
+	    && ((unsigned long) (phys_address - map->address) < map->size))
+		return map->iomem + (phys_address - map->address);
+
+	return NULL;
+}
+
 unsigned long
 uiomux_virt_to_phys(struct uiomux *uiomux, uiomux_resource_t blockmask,
 		    void *virt_address)
@@ -613,6 +623,33 @@ uiomux_virt_to_phys(struct uiomux *uiomux, uiomux_resource_t blockmask,
 		return ret;
 
 	return -1;
+}
+
+void *
+uiomux_phys_to_virt(struct uiomux *uiomux, uiomux_resource_t blockmask,
+		    unsigned long phys_address)
+{
+	struct uiomux_block *block;
+	void * ret;
+	int i;
+
+	/* Invalid if multiple bits are set, or block not found */
+	if ((i = uiomux_get_block_index(uiomux, blockmask)) == -1)
+		return (unsigned long) -1;
+
+	block = &uiomux->blocks[i];
+
+	if ((ret =
+	     uio_map_phys_to_virt(&block->uio->mem,
+				  phys_address)) != (unsigned long) -1)
+		return ret;
+
+	if ((ret =
+	     uio_map_phys_to_virt(&block->uio->mmio,
+				  phys_address)) != (unsigned long) -1)
+		return ret;
+
+	return NULL;
 }
 
 const char *uiomux_name(uiomux_resource_t block)
