@@ -13,6 +13,7 @@ noinst_HEADERS = \
 	uiomux_private.h uio.h
 
 libuiomux_la_SOURCES = \
+	dump.c \
         state.c \
 	uio.c \
 	uiomux.c

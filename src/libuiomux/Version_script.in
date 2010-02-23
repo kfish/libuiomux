@@ -24,6 +24,9 @@
 		uiomux_malloc;
 		uiomux_free;
 
+		uiomux_dump_mmio;
+		uiomux_dump_mmio_filename;
+
                 uiomux_system_reset;
                 uiomux_system_destroy;
 

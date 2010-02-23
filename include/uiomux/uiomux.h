@@ -304,6 +304,7 @@ uiomux_free (UIOMux * uiomux, uiomux_resource_t resource,
              void * address, size_t size);
 
 #include <uiomux/system.h>
+#include <uiomux/dump.h>
 
 #ifdef __cplusplus
 }
