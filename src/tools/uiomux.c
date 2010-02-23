@@ -62,6 +62,11 @@ usage (void)
 
   printf ("\nUtilities:\n");
   printf ("  alloc <n>   Allocate a specified number of bytes.\n");
+
+  printf ("\nOptions:\n");
+  printf ("  --version   Show uiomux version info\n");
+
+  printf ("\nPlease report bugs to <linux-sh@vger.kernel.org>\n");
 }
 
 static void
@@ -132,9 +137,18 @@ destroy (void)
 int
 main (int argc, char *argv[])
 {
+  int i;
+
   if (argc < 2) {
     usage();
     exit (1);
+  }
+
+  for (i=1; i<argc; i++) {
+    if (!strncmp(argv[i], "--version", 10)) {
+      version();
+      exit (0);
+    }
   }
 
   if (!strncmp (argv[1], "query", 6)) {

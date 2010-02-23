@@ -16,6 +16,9 @@ uiomux \- query and manage the UIOMux state
 .B uiomux
 .RI SUBCOMMAND
 
+.PP
+\fBuiomux\fR [\-\-version ]
+
 .SH DESCRIPTION
 .B uiomux
 is a tool for querying UIO and managing the UIOMux state.
@@ -41,6 +44,14 @@ Destroy the UIOMux system. This frees all resources used by the
 UIOMux shared state. Note that any subsequent program using UIOMux
 will reallocate and initialize this shared state, including this
 tool's 'info' and 'reset' commands.
+
+.SH OPTIONS
+.PP
+\fBuiomux\fR accepts the following options:
+
+.SS "Miscellaneous options"
+.IP "\-\-version" 10
+Output version information and exit.
 
 .SH AUTHORS
 
