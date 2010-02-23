@@ -544,6 +544,10 @@ uiomux_get_mmio(struct uiomux *uiomux, uiomux_resource_t blockmask,
 
 	block = &uiomux->blocks[i];
 
+	/* Invalid if no uio associated with it */
+	if (block->uio == NULL)
+		return 0;
+
 	if (address)
 		*address = block->uio->mmio.address;
 	if (size)
@@ -563,6 +567,10 @@ uiomux_get_mem(struct uiomux *uiomux, uiomux_resource_t blockmask,
 
 	/* Invalid if multiple bits are set, or block not found */
 	if ((i = uiomux_get_block_index(uiomux, blockmask)) == -1)
+		return 0;
+
+	/* Invalid if no uio associated with it */
+	if (block->uio == NULL)
 		return 0;
 
 	block = &uiomux->blocks[i];
@@ -608,9 +616,13 @@ uiomux_virt_to_phys(struct uiomux *uiomux, uiomux_resource_t blockmask,
 
 	/* Invalid if multiple bits are set, or block not found */
 	if ((i = uiomux_get_block_index(uiomux, blockmask)) == -1)
-		return (unsigned long) -1;
+		return 0;
 
 	block = &uiomux->blocks[i];
+
+	/* Invalid if no uio associated with it */
+	if (block->uio == NULL)
+		return 0;
 
 	if ((ret =
 	     uio_map_virt_to_phys(&block->uio->mem,
@@ -622,7 +634,7 @@ uiomux_virt_to_phys(struct uiomux *uiomux, uiomux_resource_t blockmask,
 				  virt_address)) != (unsigned long) -1)
 		return ret;
 
-	return -1;
+	return 0;
 }
 
 void *
@@ -635,9 +647,13 @@ uiomux_phys_to_virt(struct uiomux *uiomux, uiomux_resource_t blockmask,
 
 	/* Invalid if multiple bits are set, or block not found */
 	if ((i = uiomux_get_block_index(uiomux, blockmask)) == -1)
-		return (unsigned long) -1;
+		return NULL;
 
 	block = &uiomux->blocks[i];
+
+	/* Invalid if no uio associated with it */
+	if (block->uio == NULL)
+		return NULL;
 
 	if ((ret =
 	     uio_map_phys_to_virt(&block->uio->mem,
