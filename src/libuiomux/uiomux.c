@@ -569,11 +569,11 @@ uiomux_get_mem(struct uiomux *uiomux, uiomux_resource_t blockmask,
 	if ((i = uiomux_get_block_index(uiomux, blockmask)) == -1)
 		return 0;
 
+	block = &uiomux->blocks[i];
+
 	/* Invalid if no uio associated with it */
 	if (block->uio == NULL)
 		return 0;
-
-	block = &uiomux->blocks[i];
 
 	if (address)
 		*address = block->uio->mem.address;
