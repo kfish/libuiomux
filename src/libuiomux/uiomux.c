@@ -589,9 +589,10 @@ static unsigned long
 uio_map_virt_to_phys(struct uio_map *map, void *virt_address)
 {
 	if ((virt_address >= map->iomem)
-	    && ((unsigned long) (virt_address - map->iomem) < map->size))
-		return map->address +
-		    ((unsigned long) (virt_address - map->iomem));
+	    && (((unsigned long)virt_address -
+		 (unsigned long)map->iomem) < map->size))
+		return map->address + ((unsigned long)virt_address -
+				       (unsigned long)map->iomem);
 
 	return (unsigned long) -1;
 }
@@ -601,7 +602,8 @@ uio_map_phys_to_virt(struct uio_map *map, unsigned long phys_address)
 {
 	if ((phys_address >= map->address)
 	    && ((phys_address - map->address) < map->size))
-		return map->iomem + (phys_address - map->address);
+		return (void *)((unsigned long)map->iomem +
+				(phys_address - map->address));
 
 	return NULL;
 }
