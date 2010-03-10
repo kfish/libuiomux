@@ -68,7 +68,7 @@ init_owners_table (struct uiomux_state * state)
   size_t nr_pages = 0, n;
   long pagesize;
   char * o = NULL;
-  pid_t * owners;
+  pid_t * owners = NULL;
 
   pagesize = sysconf (_SC_PAGESIZE);
 
