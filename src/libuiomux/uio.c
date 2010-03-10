@@ -261,8 +261,8 @@ void *uio_malloc(struct uio *uio, pid_t * owners, size_t size, int align)
 
 	pagesize = sysconf(_SC_PAGESIZE);
 
-	pages_max = uio->mem.size / pagesize;
-	pages_req = (size / pagesize) + 1;
+	pages_max = (uio->mem.size + pagesize - 1) / pagesize;
+	pages_req = (size + pagesize - 1) / pagesize;
 
 	if ((base = uio_mem_find(owners, pages_max, pages_req)) == -1)
 		return NULL;
@@ -284,7 +284,7 @@ void uio_free(struct uio *uio, pid_t * owners, void *address, size_t size)
 	pagesize = sysconf(_SC_PAGESIZE);
 
 	base = ((int)(address - uio->mem.iomem)) / pagesize;
-	pages_req = (size / pagesize) + 1;
+	pages_req = (size + pagesize - 1) / pagesize;
 	uio_mem_free(owners, base, pages_req);
 }
 
@@ -314,7 +314,7 @@ void uio_meminfo(struct uio *uio, pid_t * owners)
 	pid_t pid = 0, new_pid;
 
 	pagesize = sysconf(_SC_PAGESIZE);
-	pages = (uio->mem.size / pagesize) + 1;
+	pages = (uio->mem.size + pagesize - 1) / pagesize;
 
 	base = addr = uio->mem.address;
 	top = addr + pagesize - 1;
