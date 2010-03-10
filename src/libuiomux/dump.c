@@ -38,7 +38,8 @@ int uiomux_dump_mmio (FILE * stream, struct uiomux *uiomux, uiomux_resource_t bl
 	unsigned long i, n;
 	int tot=0, ret;
 
-	address = uiomux_get_mmio (uiomux, blockmask, NULL, &size, &cur);
+	address = uiomux_get_mmio (uiomux, blockmask, NULL,
+				   &size, (void **)&cur);
 
 	if (address == 0) return -1;
 
