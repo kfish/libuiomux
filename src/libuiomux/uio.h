@@ -44,7 +44,7 @@ uio_open (const char * name);
 int
 uio_close (struct uio * uio);
 
-long
+int
 uio_sleep (struct uio * uio);
 
 void *

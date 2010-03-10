@@ -38,11 +38,12 @@
 static int fgets_with_openclose(char *fname, char *buf, size_t maxlen)
 {
 	FILE *fp;
+	char *s;
 
 	if ((fp = fopen(fname, "r")) != NULL) {
-		fgets(buf, maxlen, fp);
+		s = fgets(buf, maxlen, fp);
 		fclose(fp);
-		return strlen(buf);
+		return (s != NULL) ? strlen(buf) : 0;
 	} else {
 		return -1;
 	}
@@ -167,9 +168,9 @@ struct uio *uio_open(const char *name)
 	return uio;
 }
 
-long uio_sleep(struct uio *uio)
+int uio_sleep(struct uio *uio)
 {
-	int fd;
+	int fd, ret;
 
 	fd = uio->dev.fd;
 
@@ -177,14 +178,18 @@ long uio_sleep(struct uio *uio)
 	{
 		unsigned long enable = 1;
 
-		write(fd, &enable, sizeof(u_long));
+		ret = write(fd, &enable, sizeof(u_long));
+		if (ret < 0)
+			return ret;
 	}
 
 	/* Wait for an interrupt */
 	{
 		unsigned long n_pending;
 
-		read(fd, &n_pending, sizeof(u_long));
+		ret = read(fd, &n_pending, sizeof(u_long));
+		if (ret < 0)
+			return ret;
 	}
 
 	//m4iph_vpu4_int_handler();
