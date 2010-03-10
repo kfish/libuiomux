@@ -597,10 +597,10 @@ uio_map_virt_to_phys(struct uio_map *map, void *virt_address)
 }
 
 static void *
-uio_map_phys_to_virt(struct uio_map *map, long phys_address)
+uio_map_phys_to_virt(struct uio_map *map, unsigned long phys_address)
 {
 	if ((phys_address >= map->address)
-	    && ((unsigned long) (phys_address - map->address) < map->size))
+	    && ((phys_address - map->address) < map->size))
 		return map->iomem + (phys_address - map->address);
 
 	return NULL;
