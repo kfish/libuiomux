@@ -657,12 +657,12 @@ uiomux_phys_to_virt(struct uiomux *uiomux, uiomux_resource_t blockmask,
 
 	if ((ret =
 	     uio_map_phys_to_virt(&block->uio->mem,
-				  phys_address)) != (unsigned long) -1)
+				  phys_address)) != NULL)
 		return ret;
 
 	if ((ret =
 	     uio_map_phys_to_virt(&block->uio->mmio,
-				  phys_address)) != (unsigned long) -1)
+				  phys_address)) != NULL)
 		return ret;
 
 	return NULL;
