@@ -745,9 +745,9 @@ int uiomux_info(struct uiomux *uiomux)
 			    ("\tmmio\t0x%8lx\t0x%8lx bytes (%ld pages)\n\tmem\t0x%8lx\t0x%8lx bytes (%ld pages)\n",
 			     block->uio->mmio.address,
 			     block->uio->mmio.size,
-			     block->uio->mmio.size / pagesize,
+			     (block->uio->mmio.size + pagesize - 1)/ pagesize,
 			     block->uio->mem.address, block->uio->mem.size,
-			     block->uio->mem.size / pagesize);
+			     (block->uio->mem.size + pagesize - 1)/ pagesize);
 		}
 	}
 
