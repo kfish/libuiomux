@@ -1,0 +1,14 @@
+This is a loosely-categorized list of outstanding tasks and ideas for improving
+libuiomux. When implementing any of these, please include an update to this TODO
+file removing that task, in the same commit.
+s is a loosely-categorized list of outstanding tasks and ideas for improving
+libshveu. When implementing any of these, please include an update to this TODO
+file removing that task, in the same commit.
+
+
+uiomux_close() segfault / double-free when using 2 UIOMux* from the same process
+	* make a test case
+	* fix
+
+* tag memory allocations against a unique id, not pid: pthread_id?
+(s/getpid/pthread_self/g)
