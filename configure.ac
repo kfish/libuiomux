@@ -20,12 +20,13 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT
 AC_CONFIG_SRCDIR([src/libuiomux/uiomux.c])
+AC_CONFIG_MACRO_DIR([m4])
 
 AC_PREREQ(2.53)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(libuiomux, 1.0.0)
+AM_INIT_AUTOMAKE(libuiomux, 1.1.0)
 AM_CONFIG_HEADER(config.h)
 
 ################################################################################
@@ -45,7 +46,7 @@ AM_CONFIG_HEADER(config.h)
 #     then set AGE to 0.                                                       #
 #                                                                              #
 ################################################################################
-SHARED_VERSION_INFO="2:0:1"
+SHARED_VERSION_INFO="3:0:2"
 SHLIB_VERSION_ARG=""
 
 # Checks for programs.

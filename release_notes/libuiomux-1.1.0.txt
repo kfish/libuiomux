@@ -1,0 +1,85 @@
+UIOMux Release 1.1.0
+====================
+
+UIOMux is a conflict manager for system resources, including UIO devices.
+
+The source archive, and more information about the library are available from:
+
+	http://oss.renesas.com/modules/document/?libuiomux
+
+This release of libuiomux targets Renesas SH-Mobile processors.
+
+New in this release
+-------------------
+
+	* Added support for building for Android.
+
+	* Added a physical to virtual address translation function, which is
+	useful for userspace applications that interface with hardware using
+	physical addresses: uiomux_phys_to_virt()
+
+	* Added debugging routines for dumping register values exposed
+	through UIO: uiomux_dump_mmio(), uiomux_dump_mmio_filename()
+
+	* Updated libtool shared version info to 3:0:2
+
+Changes
+-------
+
+This release includes the following changes since version 1.0.0:
+
+Conrad Parker (9):
+      add uiomux_phys_to_virt() public API function
+      Update error return values for translation and mem access functions
+      Add mmio dump public API functions
+      add --version option to uiomux tool
+      Fix roundup of pagecount reported by uiomux info
+      update config.h.in, INSTALL
+      add TODO file with some suggested improvements.
+      add Matsubara-san to AUTHORS
+      Release 1.1.0
+
+Katsuya Matsubara (10):
+      Fix wrong page counting
+      Fix uninitialize variable access
+      Suppress a type mismatch warning in uiomux_dump_mmio()
+      Suppress a warning by compiler in init_owners_table()
+      Treat return value from system functions
+      Fix parameter type for memory address in uio_map_virt_to_phys()
+      Fix wrong comparison in uiomux_phys_to_virt()
+      Fix arithmetic expression with void pointer
+      Apply HAVE_CONFIG_H condition in src/tests/uiomux_test.h
+      Add Android.mk for the Android code tree
+
+ AUTHORS                         |    4 ++
+ Android.mk                      |    4 ++
+ INSTALL                         |    2 +-
+ TODO                            |   14 +++++++
+ config.h.in                     |    3 ++
+ configure.ac                    |    5 ++-
+ doc/uiomux.1                    |   11 ++++++
+ include/uiomux/Makefile.am      |    2 +-
+ include/uiomux/dump.h           |   55 ++++++++++++++++++++++++++++
+ include/uiomux/uiomux.h         |   18 ++++++++-
+ src/Android.mk                  |    1 +
+ src/libuiomux/Android.mk        |   18 +++++++++
+ src/libuiomux/Makefile.am       |    1 +
+ src/libuiomux/Version_script.in |    4 ++
+ src/libuiomux/dump.c            |   77 +++++++++++++++++++++++++++++++++++++++
+ src/libuiomux/state.c           |    2 +-
+ src/libuiomux/uio.c             |   31 ++++++++++------
+ src/libuiomux/uio.h             |    2 +-
+ src/libuiomux/uiomux.c          |   69 +++++++++++++++++++++++++++++++----
+ src/tests/Android.mk            |   65 +++++++++++++++++++++++++++++++++
+ src/tests/uiomux_tests.h        |    2 +
+ src/tools/Android.mk            |   10 +++++
+ src/tools/uiomux.c              |   14 +++++++
+ 23 files changed, 387 insertions(+), 27 deletions(-)
+ create mode 100644 Android.mk
+ create mode 100644 TODO
+ create mode 100644 include/uiomux/dump.h
+ create mode 100644 src/Android.mk
+ create mode 100644 src/libuiomux/Android.mk
+ create mode 100644 src/libuiomux/dump.c
+ create mode 100644 src/tests/Android.mk
+ create mode 100644 src/tools/Android.mk
