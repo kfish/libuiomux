@@ -7,7 +7,6 @@ file removing that task, in the same commit.
 
 
 uiomux_close() segfault / double-free when using 2 UIOMux* from the same process
-	* make a test case
 	* fix
 
 * tag memory allocations against a unique id, not pid: pthread_id?

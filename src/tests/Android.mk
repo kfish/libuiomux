@@ -18,6 +18,15 @@ LOCAL_SHARED_LIBRARIES := libuiomux
 LOCAL_MODULE := double-open
 include $(BUILD_EXECUTABLE)
 
+# multiple-open
+include $(CLEAR_VARS)
+LOCAL_C_INCLUDES := external/libuiomux/include
+LOCAL_CFLAGS := -DVERSION=\"1.0.0\"
+LOCAL_SRC_FILES := multiple-open.c
+LOCAL_SHARED_LIBRARIES := libuiomux
+LOCAL_MODULE := multiple-open
+include $(BUILD_EXECUTABLE)
+
 # lock-unlock
 include $(CLEAR_VARS)
 LOCAL_C_INCLUDES := external/libuiomux/include
