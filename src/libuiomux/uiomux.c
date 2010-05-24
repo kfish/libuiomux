@@ -286,7 +286,13 @@ int uiomux_close(struct uiomux *uiomux)
 
 	uiomux_free_mem(uiomux);
 	uiomux_unlock_all(uiomux);
-	unmap_shared_state(uiomux->shared_state);
+
+	/* Avoid unmapping the shared state, to allow multiple mappings to
+	 * exist (ie. multiple calls to uiomux_open() within the same process).
+	 * uiomux_close() is only called from uiomux_on_exit(), and the
+	 * shared state will be unmapped on exit anyway.
+	 */
+	//unmap_shared_state(uiomux->shared_state);
 
 	uiomux_delete(uiomux);
 
