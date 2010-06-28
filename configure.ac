@@ -26,7 +26,7 @@ AC_PREREQ(2.53)
 
 AC_CANONICAL_TARGET
 
-AM_INIT_AUTOMAKE(libuiomux, 1.1.0)
+AM_INIT_AUTOMAKE(libuiomux, 1.2.0)
 AM_CONFIG_HEADER(config.h)
 
 ################################################################################
